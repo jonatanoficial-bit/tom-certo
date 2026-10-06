@@ -6,6 +6,8 @@
 2. Em **Settings → Pages**, selecione **GitHub Actions** como fonte de deploy.
 3. Faça push para `main` ou execute manualmente o workflow **Deploy Tom Certo to GitHub Pages**.
 
+> **Repositório privado:** a disponibilidade do GitHub Pages depende do plano da conta. Na conta atual, o GitHub solicita tornar o repositório público ou atualizar o plano para habilitar Pages privados. Não torne o repositório público para “proteger” o código: uma PWA sempre entrega JavaScript ao navegador. A proteção comercial deve ficar na licença assinada e no serviço de ativação, nunca em segredo no cliente.
+
 O arquivo `.github/workflows/deploy.yml` habilita o GitHub Pages na primeira execução, instala dependências com `pnpm install --frozen-lockfile`, executa lint, typecheck, testes e build, e só publica se tudo passar.
 
 ## Caminho de assets

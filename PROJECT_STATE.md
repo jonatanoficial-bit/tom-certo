@@ -51,3 +51,4 @@ O Lote 1 está concluído: a aplicação possui fundação compilável, design s
 - Avaliar Essentia.js versus DSP próprio para os motores posteriores, considerando tamanho de bundle e licença.
 - Gerar ícones PNG 192/512 antes da auditoria PWA final, para máxima interoperabilidade de instaladores.
 - Decidir modalidade comercial e implementar o serviço remoto de ativação antes de liberar vendas.
+- O repositório GitHub foi criado como privado. A conta atual informa que GitHub Pages exige tornar o repositório público ou fazer upgrade para um plano que suporte Pages privados; por isso o código e o workflow foram publicados, mas a URL pública ainda não foi gerada.
