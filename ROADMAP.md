@@ -41,5 +41,7 @@ O primeiro marco desta fase está entregue no app:
 4. controles de contraste, link para pular ao conteúdo e relações de abas acessíveis;
 5. redesign editorial premium, pensado para uma marca internacional sem depender de imagens externas ou fontes remotas.
 6. afinador local integrado ao kit: autorização explícita de microfone, detecção por autocorrelação, leitura de frequência/nota/oitava/cents e pausa automática ao sair da tela.
+7. correção de calibração inicial: o detector tonal agrupa séries harmônicas de piano/instrumentos na fundamental; o afinador usa YIN e recusa sinais polifônicos ou ambíguos.
+8. janela de captura com duração explícita: 15 segundos de análise local, mínimo de 8 segundos antes de resultado e desligamento automático do microfone; a prova de precisão em corpus de músicas reais continua obrigatória antes do release final.
 
 Antes de chamar a versão 1.0.0 de release final, ainda são obrigatórios: teste físico de microfone/instalação em Android e iOS, validação do cache em rede desligada, calibração do detector com gravações variadas e definição do serviço comercial de ativação.

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AudioCaptureController, audioErrorMessage } from '../audio/audioCaptureController';
+import { CAPTURE_WINDOW_MS, captureProgressFor, hasEnoughCaptureTime } from '../audio/capturePolicy';
 import { measureTimeDomainSignal } from '../audio/signalMetrics';
 import { EMPTY_READING_QUALITY, ReadingQualityMeter, type ReadingQuality } from '../audio/readingQuality';
 import type { ActiveAudioSession, AudioCapturePhase, AudioSignalMetrics } from '../audio/types';
@@ -16,7 +17,11 @@ export function useAudioCapture() {
   const [readingQuality, setReadingQuality] = useState<ReadingQuality>(EMPTY_READING_QUALITY);
   const [hasReliableDetection, setHasReliableDetection] = useState(false);
   const [message, setMessage] = useState('Pronto quando você estiver.');
+  const [captureElapsedMs, setCaptureElapsedMs] = useState(0);
   const stopTimerRef = useRef<number | null>(null);
+  const captureTimerRef = useRef<number | null>(null);
+  const captureStartedAtRef = useRef<number | null>(null);
+  const captureElapsedRef = useRef(0);
   const detectorRef = useRef(new LocalKeyDetector());
   const qualityRef = useRef(new ReadingQualityMeter());
 
@@ -25,13 +30,27 @@ export function useAudioCapture() {
     stopTimerRef.current = null;
   }, []);
 
+  const resetCaptureWindow = useCallback(() => {
+    if (captureTimerRef.current) window.clearTimeout(captureTimerRef.current);
+    captureTimerRef.current = null;
+    captureStartedAtRef.current = null;
+  }, []);
+
   const finish = useCallback(async () => {
     resetTimer();
+    const elapsedMs = captureStartedAtRef.current === null
+      ? captureElapsedRef.current
+      : Math.min(CAPTURE_WINDOW_MS, performance.now() - captureStartedAtRef.current);
+    captureElapsedRef.current = elapsedMs;
+    setCaptureElapsedMs(elapsedMs);
+    resetCaptureWindow();
     const finalDetection = detectorRef.current.estimate();
     const finalQuality = qualityRef.current.result();
+    const hasEnoughTime = hasEnoughCaptureTime(elapsedMs);
     const hasReliableResult = isReliableDetection(finalDetection, detectorRef.current.frames)
       && finalQuality.stabilityScore >= .62
-      && finalQuality.score >= .54;
+      && finalQuality.score >= .54
+      && hasEnoughTime;
     await controllerRef.current.stop();
     setSession(null);
     setMetrics(EMPTY_METRICS);
@@ -41,8 +60,19 @@ export function useAudioCapture() {
     setPhase('complete');
     setMessage(hasReliableResult
       ? 'Leitura concluída com evidência suficiente para o resultado abaixo.'
-      : 'Ainda não há evidência suficiente. Tente alguns acordes ou uma parte mais clara da música.');
-  }, [resetTimer]);
+      : !hasEnoughTime
+        ? 'Trecho curto demais para concluir. Faça uma captura de pelo menos 8 segundos, de preferência 15 segundos.'
+        : 'Ainda não há evidência tonal suficiente. Tente um trecho com harmonia clara e menos ruído.');
+  }, [resetCaptureWindow, resetTimer]);
+
+  const beginCaptureWindow = useCallback(() => {
+    captureStartedAtRef.current = performance.now();
+    captureElapsedRef.current = 0;
+    setCaptureElapsedMs(0);
+    captureTimerRef.current = window.setTimeout(() => {
+      void finish();
+    }, CAPTURE_WINDOW_MS);
+  }, [finish]);
 
   const handleNaturalEnd = useCallback(() => {
     setPhase('processing');
@@ -54,6 +84,7 @@ export function useAudioCapture() {
 
   const startMicrophone = useCallback(async () => {
     resetTimer();
+    resetCaptureWindow();
     detectorRef.current.reset();
     qualityRef.current.reset();
     setDetection(null);
@@ -62,19 +93,21 @@ export function useAudioCapture() {
     setPhase('requesting-permission');
     setMessage('Pedindo acesso ao microfone…');
     try {
-      const activeSession = await controllerRef.current.startMicrophone(handleNaturalEnd);
+      const activeSession = await controllerRef.current.startMicrophone(handleNaturalEnd, 4096);
       setSession(activeSession);
       setPhase('listening');
-      setMessage('Cante, toque ou reproduza alguns acordes.');
+      beginCaptureWindow();
+      setMessage('Capture um trecho de até 15 segundos. Continue até a leitura terminar automaticamente.');
     } catch (error) {
       setSession(null);
       setPhase('error');
       setMessage(audioErrorMessage(error));
     }
-  }, [handleNaturalEnd, resetTimer]);
+  }, [beginCaptureWindow, handleNaturalEnd, resetCaptureWindow, resetTimer]);
 
   const startFile = useCallback(async (file: File) => {
     resetTimer();
+    resetCaptureWindow();
     detectorRef.current.reset();
     qualityRef.current.reset();
     setDetection(null);
@@ -83,16 +116,17 @@ export function useAudioCapture() {
     setPhase('processing');
     setMessage(`Preparando ${file.name} localmente…`);
     try {
-      const activeSession = await controllerRef.current.startFile(file, handleNaturalEnd);
+      const activeSession = await controllerRef.current.startFile(file, handleNaturalEnd, 4096);
       setSession(activeSession);
       setPhase('listening');
-      setMessage('O arquivo está sendo lido neste dispositivo.');
+      beginCaptureWindow();
+      setMessage('O arquivo está sendo lido neste dispositivo por até 15 segundos.');
     } catch (error) {
       setSession(null);
       setPhase('error');
       setMessage(audioErrorMessage(error));
     }
-  }, [handleNaturalEnd, resetTimer]);
+  }, [beginCaptureWindow, handleNaturalEnd, resetCaptureWindow, resetTimer]);
 
   useEffect(() => {
     if (!session) return;
@@ -100,8 +134,15 @@ export function useAudioCapture() {
     const spectrum = new Float32Array(session.analyser.frequencyBinCount);
     let animationFrame = 0;
     let lastSampleAt = 0;
+    let lastProgressAt = 0;
 
     const measure = (now: number) => {
+      if (captureStartedAtRef.current !== null && now - lastProgressAt > 180) {
+        const elapsedMs = Math.min(CAPTURE_WINDOW_MS, now - captureStartedAtRef.current);
+        captureElapsedRef.current = elapsedMs;
+        setCaptureElapsedMs(elapsedMs);
+        lastProgressAt = now;
+      }
       if (now - lastSampleAt > 100) {
         session.analyser.getByteTimeDomainData(samples);
         const signal = measureTimeDomainSignal(samples);
@@ -133,8 +174,9 @@ export function useAudioCapture() {
 
   useEffect(() => () => {
     resetTimer();
+    resetCaptureWindow();
     void controllerRef.current.stop();
-  }, [resetTimer]);
+  }, [resetCaptureWindow, resetTimer]);
 
   return {
     phase,
@@ -144,6 +186,9 @@ export function useAudioCapture() {
     detection,
     readingQuality,
     hasReliableDetection,
+    captureElapsedMs,
+    captureProgress: captureProgressFor(captureElapsedMs),
+    captureWindowSeconds: CAPTURE_WINDOW_MS / 1_000,
     startMicrophone,
     startFile,
     stop: finish,

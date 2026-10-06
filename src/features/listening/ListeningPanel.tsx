@@ -16,7 +16,7 @@ const SIGNAL_COPY: Record<SignalState, string> = {
 
 export function ListeningPanel() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { phase, session, metrics, message, detection, readingQuality, hasReliableDetection, startMicrophone, startFile, stop } = useAudioCapture();
+  const { phase, session, metrics, message, detection, readingQuality, hasReliableDetection, captureElapsedMs, captureProgress, captureWindowSeconds, startMicrophone, startFile, stop } = useAudioCapture();
   const isLive = phase === 'listening';
   const isBusy = phase === 'requesting-permission' || phase === 'processing';
   const isComplete = phase === 'complete';
@@ -54,6 +54,10 @@ export function ListeningPanel() {
             <div className="signal-metrics">
               <div><span>NÍVEL</span><strong>{formatDecibels(metrics.decibels)}</strong></div>
               <div><span>QUALIDADE</span><strong className={`signal-state signal-state--${metrics.state}`}>{SIGNAL_COPY[metrics.state]}</strong></div>
+            </div>
+            <div className="capture-window" aria-label={`Janela de leitura: ${Math.ceil(captureElapsedMs / 1_000)} de ${captureWindowSeconds} segundos`}>
+              <div><span>JANELA DE LEITURA</span><strong>{Math.ceil(captureElapsedMs / 1_000)}s / {captureWindowSeconds}s</strong></div>
+              <i><b style={{ width: `${Math.round(captureProgress * 100)}%` }} /></i>
             </div>
           </div>
         ) : isComplete && hasReliableDetection && detection ? (
@@ -96,9 +100,9 @@ export function ListeningPanel() {
       <input ref={fileInputRef} className="sr-only" type="file" accept="audio/*,.wav,.mp3,.m4a,.aac,.ogg,.flac" onChange={handleFile} />
       <div className="hero__actions">
         {isLive ? (
-          <Button variant="primary" icon="stop" onClick={() => void stop()}>PARAR ESCUTA</Button>
+          <Button variant="primary" icon="stop" onClick={() => void stop()}>FINALIZAR E AVALIAR</Button>
         ) : (
-          <Button variant="primary" icon="mic" disabled={isBusy} onClick={() => void startMicrophone()}>{isError || isComplete ? 'OUVIR NOVAMENTE' : 'OUVIR AGORA'}</Button>
+          <Button variant="primary" icon="mic" disabled={isBusy} onClick={() => void startMicrophone()}>{isError || isComplete ? 'NOVA CAPTURA · 15S' : 'CAPTURAR 15 SEGUNDOS'}</Button>
         )}
         <Button variant="secondary" icon="upload" disabled={isBusy || isLive} onClick={selectFile}>Enviar áudio</Button>
       </div>

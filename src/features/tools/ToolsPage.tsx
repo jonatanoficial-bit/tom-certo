@@ -125,7 +125,7 @@ export function ToolsPage({ notify, guided }: ToolsPageProps) {
       {tab === 'tuner' ? (
         <section id="tool-panel-tuner" className="music-tool-panel tuner-panel" role="tabpanel" aria-labelledby="tool-tab-tuner">
           <div className="music-tool-panel__heading"><span className="tool-mark"><Icon name="tuner" size={21} /></span><div><p>AFINADOR LOCAL</p><h2>Encontre sua nota</h2></div></div>
-          <p className="tuner-panel__intro">Use uma nota por vez. A leitura fica no seu dispositivo e não grava seu áudio.</p>
+          <p className="tuner-panel__intro">Use uma nota por vez — voz, corda ou tecla isolada. Para descobrir o <strong>tom da música</strong>, use a leitura tonal na tela inicial. O afinador não grava nem envia seu áudio.</p>
           <div className={`tuner-readout ${tunerDirection ? `is-${tunerDirection}` : ''}`} aria-live="polite" aria-label={tuner.reading ? `Nota ${tuner.reading.note}${tuner.reading.octave}, ${tuner.reading.cents} cents` : 'Aguardando uma nota'}>
             <div className="tuner-readout__orbit" aria-hidden="true"><i /><i /><i /></div>
             <span className="tuner-readout__label">NOTA</span>

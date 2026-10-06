@@ -6,12 +6,16 @@ function sineWave(frequency: number, sampleRate = 44_100, size = 2_048): Float32
 }
 
 describe('pitch detector', () => {
-  it('finds a sustained A4 from a local time-domain signal', () => {
-    const estimate = estimatePitch(sineWave(440), 44_100);
+  it.each([
+    [440, 'A', 4],
+    [261.63, 'C', 4],
+    [329.63, 'E', 4],
+  ])('finds %s Hz as %s%s', (frequency, note, octave) => {
+    const estimate = estimatePitch(sineWave(frequency), 44_100);
 
-    expect(estimate?.frequency).toBeCloseTo(440, 0);
-    expect(tunerReadingFor(estimate!).note).toBe('A');
-    expect(tunerReadingFor(estimate!).octave).toBe(4);
+    expect(estimate?.frequency).toBeCloseTo(frequency, 0);
+    expect(tunerReadingFor(estimate!).note).toBe(note);
+    expect(tunerReadingFor(estimate!).octave).toBe(octave);
   });
 
   it('does not invent a note from silence', () => {

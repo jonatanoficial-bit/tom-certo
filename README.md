@@ -26,6 +26,8 @@ Tom Certo é um assistente musical comercial e local-first, pensado para descobr
 
 > Um resultado só é mostrado quando existem evidências tonais e qualidade de leitura suficientes. A porcentagem não é uma promessa de “acerto do programa”: ela descreve o sinal e, principalmente, a estabilidade das evidências daquele áudio.
 
+O afinador mede uma nota isolada; para identificar o tom de uma música ou acorde, use a leitura tonal da tela inicial.
+
 ## Desenvolvimento
 
 Requer Node.js 20.19+ (recomendado: LTS atual) e pnpm 11.19+.
@@ -78,6 +80,8 @@ docs/               # documentação complementar
 ## Privacidade
 
 O áudio é processado no navegador e não é enviado automaticamente a um servidor.
+
+Durante uma captura, o microfone é analisado na memória por até 15 segundos; o app não grava arquivo de áudio, não usa `MediaRecorder` e não salva som no dispositivo. Veja [Medição tonal e privacidade](docs/TONAL_ACCURACY.md).
 
 ## Uso offline
 

@@ -20,6 +20,9 @@ const MINOR_PROFILE = [6.33, 2.68, 3.52, 5.38, 2.6, 3.53, 2.54, 4.75, 3.98, 2.69
 const MIN_FREQUENCY = 55;
 const MAX_FREQUENCY = 2_200;
 const SPECTRUM_FLOOR = -78;
+const LOWEST_FUNDAMENTAL_MIDI = 36; // C2
+const HIGHEST_FUNDAMENTAL_MIDI = 96; // C7
+const MAX_HARMONICS = 7;
 
 function clamp(value: number, lower = 0, upper = 1): number {
   return Math.min(upper, Math.max(lower, value));
@@ -61,6 +64,28 @@ function candidateFor(chromagram: readonly number[], tonic: number, mode: KeyMod
     label: keyLabel(tonic, mode),
     score: correlation(chromagram, rotatedProfile(profile, tonic)),
   };
+}
+
+function estimateAverageDetuningCents(spectrum: Float32Array, sampleRate: number, fftSize: number): number {
+  const binWidth = sampleRate / fftSize;
+  let weightedCents = 0;
+  let totalWeight = 0;
+
+  for (let bin = 2; bin < spectrum.length - 2; bin += 1) {
+    const decibels = spectrum[bin];
+    if (!Number.isFinite(decibels) || decibels < -55 || decibels < spectrum[bin - 1] || decibels < spectrum[bin + 1]) continue;
+    const frequency = bin * binWidth;
+    if (frequency < MIN_FREQUENCY || frequency > MAX_FREQUENCY) continue;
+
+    const semitonesFromA = 12 * Math.log2(frequency / 440);
+    const cents = (semitonesFromA - Math.round(semitonesFromA)) * 100;
+    const weight = ((decibels - SPECTRUM_FLOOR) / -SPECTRUM_FLOOR) ** 2;
+    weightedCents += cents * weight;
+    totalWeight += weight;
+  }
+
+  if (totalWeight === 0) return 0;
+  return Math.max(-45, Math.min(45, weightedCents / totalWeight));
 }
 
 /**
@@ -123,22 +148,44 @@ export class LocalKeyDetector {
   ingestSpectrum(spectrum: Float32Array, sampleRate: number, fftSize: number): KeyDetection | null {
     let frameEnergy = 0;
     const binWidth = sampleRate / fftSize;
+    const frameChroma = new Float64Array(12);
+    const detuningCents = estimateAverageDetuningCents(spectrum, sampleRate, fftSize);
 
-    for (let bin = 1; bin < spectrum.length; bin += 1) {
-      const decibels = spectrum[bin];
-      if (!Number.isFinite(decibels) || decibels < SPECTRUM_FLOOR) continue;
-      const frequency = bin * binWidth;
-      if (frequency < MIN_FREQUENCY || frequency > MAX_FREQUENCY) continue;
+    for (let midi = LOWEST_FUNDAMENTAL_MIDI; midi <= HIGHEST_FUNDAMENTAL_MIDI; midi += 1) {
+      const fundamental = 440 * (2 ** ((midi - 69 + (detuningCents / 100)) / 12));
+      let harmonicScore = 0;
 
-      const midi = Math.round(69 + 12 * Math.log2(frequency / 440));
+      for (let harmonic = 1; harmonic <= MAX_HARMONICS; harmonic += 1) {
+        const harmonicFrequency = fundamental * harmonic;
+        if (harmonicFrequency < MIN_FREQUENCY || harmonicFrequency > MAX_FREQUENCY) break;
+
+        const bin = Math.round(harmonicFrequency / binWidth);
+        const nearbyDecibels = Math.max(
+          spectrum[Math.max(0, bin - 1)] ?? -Infinity,
+          spectrum[bin] ?? -Infinity,
+          spectrum[Math.min(spectrum.length - 1, bin + 1)] ?? -Infinity,
+        );
+        if (!Number.isFinite(nearbyDecibels) || nearbyDecibels < SPECTRUM_FLOOR) continue;
+
+        // Squaring the normalized level suppresses the spectral floor while
+        // preserving peaks shared by a note's harmonic series.
+        const level = (nearbyDecibels - SPECTRUM_FLOOR) / -SPECTRUM_FLOOR;
+        harmonicScore += (level * level) / (harmonic ** .72);
+      }
+
+      if (harmonicScore < .08) continue;
       const pitchClass = ((midi % 12) + 12) % 12;
-      const amplitude = 10 ** (decibels / 20);
-      const weight = amplitude / Math.sqrt(frequency);
-      this.chromagram[pitchClass] += weight;
+      const weight = (harmonicScore ** 1.2) / Math.sqrt(fundamental);
+      frameChroma[pitchClass] += weight;
       frameEnergy += weight;
     }
 
-    if (frameEnergy > .0001) this.analyzedFrames += 1;
+    if (frameEnergy > .0001) {
+      for (let index = 0; index < this.chromagram.length; index += 1) {
+        this.chromagram[index] += frameChroma[index] / frameEnergy;
+      }
+      this.analyzedFrames += 1;
+    }
     return this.estimate();
   }
 }

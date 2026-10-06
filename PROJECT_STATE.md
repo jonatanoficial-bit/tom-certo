@@ -2,8 +2,8 @@
 
 ## Última atualização
 
-- **Versão:** 0.5.0
-- **Build:** 0500
+- **Versão:** 0.6.0
+- **Build:** 0600
 - **Fase atual:** 04 de 04 — em andamento
 - **Data:** 2026-10-06
 
@@ -41,12 +41,15 @@ O Lote 1 está concluído. As Fases 2 e 3 têm seus núcleos funcionais locais; 
 - direção visual editorial premium por CSS: profundidade tonal, grade de sinal, superfícies próprias e sem dependências remotas.
 - afinador em tempo real local: leitura de frequência, nota, oitava e cents, com indicação para subir/descer a afinação;
 - pausa automática do afinador ao trocar de ferramenta, ocultar a página ou parar a sessão.
+- calibração do detector tonal para séries harmônicas de instrumentos: o motor agora reúne harmônicos na nota fundamental e rejeita entradas ambíguas no afinador.
+- janela controlada de captura: 15 segundos de evidência, mínimo de 8 segundos, barra de progresso e término automático sem armazenar áudio bruto;
+- correção de desafinação média do instrumento antes da análise de tonalidade.
 
 ## Verificações executadas
 
 - `pnpm lint` — aprovado.
 - `pnpm typecheck` — aprovado.
-- `pnpm test` — aprovado: 8 arquivos / 21 testes.
+- `pnpm test` — aprovado: 9 arquivos / 27 testes.
 - `pnpm build` — aprovado: bundle Vite de produção gerado.
 - QA responsivo manual: 320, 360, 390, 412, 768 e 1440px sem overflow horizontal; Home, CTA e navegação verificados.
 

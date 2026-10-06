@@ -10,9 +10,9 @@ export function createAudioContext(): AudioContext {
   return new Context();
 }
 
-export function createAnalyser(context: AudioContext): AnalyserNode {
+export function createAnalyser(context: AudioContext, fftSize = 2048): AnalyserNode {
   const analyser = context.createAnalyser();
-  analyser.fftSize = 2048;
+  analyser.fftSize = fftSize;
   analyser.smoothingTimeConstant = 0.72;
   analyser.minDecibels = -92;
   analyser.maxDecibels = -12;

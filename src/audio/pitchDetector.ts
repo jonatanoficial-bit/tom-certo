@@ -14,65 +14,68 @@ export interface TunerReading extends PitchEstimate {
 const NOTE_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
 
 /**
- * Finds the most periodic lag in a mono time-domain buffer. The normalized
- * correlation keeps loudness from being confused with a musical pitch.
+ * YIN-style period estimator for one sustained voice or instrument note.
+ * It deliberately rejects ambiguous/polyphonic input instead of returning a
+ * convincing but arbitrary pitch from a chord or noisy room.
  */
 export function estimatePitch(samples: Float32Array, sampleRate: number, minFrequency = 55, maxFrequency = 1_400): PitchEstimate | null {
   if (samples.length < 64 || sampleRate <= 0) return null;
 
+  let mean = 0;
+  for (const sample of samples) mean += sample;
+  mean /= samples.length;
+
   let energy = 0;
-  for (const sample of samples) energy += sample * sample;
+  for (const sample of samples) {
+    const centered = sample - mean;
+    energy += centered * centered;
+  }
   const rms = Math.sqrt(energy / samples.length);
   if (rms < .008) return null;
 
   const minLag = Math.max(2, Math.floor(sampleRate / maxFrequency));
   const maxLag = Math.min(samples.length - 3, Math.floor(sampleRate / minFrequency));
-  let bestLag = -1;
-  let bestCorrelation = -1;
-  const correlations = new Float32Array(maxLag + 1);
+  const difference = new Float32Array(maxLag + 1);
+  const normalizedDifference = new Float32Array(maxLag + 1);
+  let cumulativeDifference = 0;
 
-  for (let lag = minLag; lag <= maxLag; lag += 1) {
-    let numerator = 0;
-    let leftEnergy = 0;
-    let rightEnergy = 0;
+  for (let lag = 1; lag <= maxLag; lag += 1) {
+    let sum = 0;
     const limit = samples.length - lag;
 
     for (let index = 0; index < limit; index += 1) {
-      const left = samples[index];
-      const right = samples[index + lag];
-      numerator += left * right;
-      leftEnergy += left * left;
-      rightEnergy += right * right;
+      const delta = samples[index] - samples[index + lag];
+      sum += delta * delta;
     }
 
-    const correlation = numerator / Math.sqrt(leftEnergy * rightEnergy || 1);
-    correlations[lag] = correlation;
-    if (correlation > bestCorrelation) bestCorrelation = correlation;
+    difference[lag] = sum;
+    cumulativeDifference += sum;
+    normalizedDifference[lag] = cumulativeDifference > 0 ? (sum * lag) / cumulativeDifference : 1;
   }
 
-  // The first strong local peak represents the fundamental period. Choosing
-  // the absolute maximum can accidentally select an octave below it because
-  // a pure wave also correlates at later multiples of the period.
-  for (let lag = minLag + 1; lag < maxLag; lag += 1) {
-    const current = correlations[lag];
-    if (current >= .72 && current >= correlations[lag - 1] && current > correlations[lag + 1]) {
+  const threshold = .16;
+  let bestLag = -1;
+  for (let lag = minLag; lag < maxLag; lag += 1) {
+    if (normalizedDifference[lag] < threshold) {
       bestLag = lag;
-      bestCorrelation = current;
+      while (bestLag + 1 < maxLag && normalizedDifference[bestLag + 1] < normalizedDifference[bestLag]) {
+        bestLag += 1;
+      }
       break;
     }
   }
 
-  if (bestLag < 0 || bestCorrelation < .72) return null;
+  if (bestLag < 0) return null;
 
-  const previous = correlations[bestLag - 1] ?? bestCorrelation;
-  const current = correlations[bestLag];
-  const next = correlations[bestLag + 1] ?? bestCorrelation;
+  const previous = normalizedDifference[bestLag - 1] ?? normalizedDifference[bestLag];
+  const current = normalizedDifference[bestLag];
+  const next = normalizedDifference[bestLag + 1] ?? normalizedDifference[bestLag];
   const denominator = previous - (2 * current) + next;
   const adjustment = Math.abs(denominator) > .00001 ? .5 * (previous - next) / denominator : 0;
   const frequency = sampleRate / (bestLag + adjustment);
 
   if (!Number.isFinite(frequency) || frequency < minFrequency || frequency > maxFrequency) return null;
-  return { frequency, clarity: Math.max(0, Math.min(1, bestCorrelation)) };
+  return { frequency, clarity: Math.max(0, Math.min(1, 1 - current)) };
 }
 
 export function tunerReadingFor(pitch: PitchEstimate): TunerReading {

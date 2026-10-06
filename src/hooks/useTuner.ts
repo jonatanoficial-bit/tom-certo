@@ -11,10 +11,12 @@ export function useTuner() {
   const [reading, setReading] = useState<TunerReading | null>(null);
   const [message, setMessage] = useState('Ative o microfone e toque uma nota por vez.');
   const sessionRef = useRef<ActiveAudioSession | null>(null);
+  const frequencyHistoryRef = useRef<number[]>([]);
 
   const stop = useCallback(async () => {
     await controllerRef.current.stop();
     sessionRef.current = null;
+    frequencyHistoryRef.current = [];
     setPhase('idle');
     setReading(null);
     setMessage('Afinador pausado. Nenhum áudio é gravado ou enviado.');
@@ -23,9 +25,10 @@ export function useTuner() {
   const start = useCallback(async () => {
     setPhase('requesting-permission');
     setReading(null);
+    frequencyHistoryRef.current = [];
     setMessage('Pedindo acesso ao microfone…');
     try {
-      const session = await controllerRef.current.startMicrophone(() => { void stop(); });
+      const session = await controllerRef.current.startMicrophone(() => { void stop(); }, 4096);
       sessionRef.current = session;
       setPhase('listening');
       setMessage('Ouvindo localmente. Toque uma nota sustentada.');
@@ -48,7 +51,15 @@ export function useTuner() {
       if (now - lastMeasuredAt >= 80) {
         session.analyser.getFloatTimeDomainData(samples);
         const pitch = estimatePitch(samples, session.sampleRate);
-        setReading(pitch ? tunerReadingFor(pitch) : null);
+        if (pitch && pitch.clarity >= .72) {
+          const history = [...frequencyHistoryRef.current, pitch.frequency].slice(-5).sort((left, right) => left - right);
+          frequencyHistoryRef.current = history;
+          const middle = history[Math.floor(history.length / 2)];
+          setReading(tunerReadingFor({ ...pitch, frequency: middle }));
+        } else {
+          frequencyHistoryRef.current = [];
+          setReading(null);
+        }
         lastMeasuredAt = now;
       }
       animationFrame = window.requestAnimationFrame(measure);

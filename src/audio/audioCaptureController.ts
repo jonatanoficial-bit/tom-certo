@@ -18,7 +18,7 @@ export class AudioCaptureController {
   private active: ActiveAudioSession | null = null;
   private context: AudioContext | null = null;
 
-  async startMicrophone(onEnded: () => void): Promise<ActiveAudioSession> {
+  async startMicrophone(onEnded: () => void, analyserFftSize = 2048): Promise<ActiveAudioSession> {
     await this.stop();
     if (!navigator.mediaDevices?.getUserMedia) {
       throw new Error('Microphone capture is not supported by this browser.');
@@ -39,7 +39,7 @@ export class AudioCaptureController {
       context = createAudioContext();
       await context.resume();
       const sourceNode = context.createMediaStreamSource(stream);
-      const analyser = createAnalyser(context);
+      const analyser = createAnalyser(context, analyserFftSize);
       const mutedOutput = context.createGain();
       mutedOutput.gain.value = 0;
       sourceNode.connect(analyser);
@@ -78,13 +78,13 @@ export class AudioCaptureController {
     }
   }
 
-  async startFile(file: File, onEnded: () => void): Promise<ActiveAudioSession> {
+  async startFile(file: File, onEnded: () => void, analyserFftSize = 2048): Promise<ActiveAudioSession> {
     await this.stop();
     const context = createAudioContext();
     try {
       const audioBuffer = await context.decodeAudioData(await file.arrayBuffer());
       const sourceNode = context.createBufferSource();
-      const analyser = createAnalyser(context);
+      const analyser = createAnalyser(context, analyserFftSize);
       const mutedOutput = context.createGain();
       mutedOutput.gain.value = 0;
 

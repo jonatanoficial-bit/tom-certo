@@ -6,6 +6,9 @@ Todas as mudanças relevantes deste projeto serão documentadas aqui.
 
 ### Added
 
+- Captura tonal temporal: análise local de até 15 segundos, mínimo de 8 segundos para resultado, desligamento automático do microfone e indicador de progresso.
+- Correção harmônica e de detuning no detector tonal para reduzir deslocamentos de semitom em piano e instrumentos levemente desafinados.
+- Calibração de leitura: agrupamento de harmônicos para reduzir falsos deslocamentos em piano/acordes e detector YIN para o afinador monofônico.
 - Afinador local em tempo real com detecção por autocorrelação, leitura de nota/oitava/cents e indicador visual de afinação.
 - Fase 4 iniciada: modo iniciante, modo culto com apresentação de alto contraste, preferências de contraste e status de conectividade.
 - Shell PWA atualizado com fallback de navegação offline e estratégia de cache renovada.
