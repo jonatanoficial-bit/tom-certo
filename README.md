@@ -2,7 +2,7 @@
 
 **Ouça. Descubra. Toque.**
 
-Tom Certo é um assistente musical comercial e local-first, pensado para descobrir a tonalidade de voz, instrumentos e músicas com uma experiência simples, rápida e bonita. Este repositório contém o **Lote 1 — Fundação, design system, arquitetura e GitHub Pages**.
+Tom Certo é um assistente musical comercial e local-first, pensado para descobrir a tonalidade de voz, instrumentos e músicas com uma experiência simples, rápida e bonita. O projeto está na **Fase 2 — jornada central de identificação**.
 
 ## O que já existe
 
@@ -14,8 +14,12 @@ Tom Certo é um assistente musical comercial e local-first, pensado para descobr
 - PWA inicial: manifesto, ícone e service worker;
 - workflow de qualidade e deploy no GitHub Pages.
 - arquitetura inicial de licença por dispositivo, preparada para ativação única e uso offline posterior.
+- captura local por microfone e envio de arquivo de áudio, sem upload para servidor;
+- visualizador reativo, leitura de RMS, silêncio, sinal baixo e clipping;
+- ranking tonal local das 24 tonalidades maiores/menores por cromagrama espectral;
+- resultado transparente: tom principal, relativa e confiança baseada predominantemente na estabilidade da evidência tonal da própria leitura.
 
-> A captura de microfone, upload e identificação real de tonalidade começam no Lote 2. A interface não inventa um resultado de análise nesta versão.
+> Um resultado só é mostrado quando existem evidências tonais e qualidade de leitura suficientes. A porcentagem não é uma promessa de “acerto do programa”: ela descreve o sinal e, principalmente, a estabilidade das evidências daquele áudio.
 
 ## Desenvolvimento
 
@@ -68,7 +72,7 @@ docs/               # documentação complementar
 
 ## Privacidade
 
-O produto é desenhado para processamento local. Quando a captura de áudio for introduzida, o áudio não será enviado automaticamente a um servidor.
+O áudio é processado no navegador e não é enviado automaticamente a um servidor.
 
 ## Licenciamento comercial
 

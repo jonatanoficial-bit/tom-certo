@@ -47,9 +47,9 @@ O app usa hash routing (`#/` e `#/tools`) para que uma atualização de página 
 | Service worker manual inicial | Evita acoplamento precoce; pode ser substituído por uma estratégia Workbox quando os assets de áudio forem definidos. |
 | Sem “resultado demo” | Confiança do usuário depende de não fingir análise musical. |
 
-## Evolução prevista
+## Fase 2 em andamento
 
-No Lote 2, a camada `audio/` receberá `MicrophoneCapture`, `AudioFileDecoder` e métricas de qualidade. Lotes 3–5 adicionam ranking tonal e agregação temporal; Lote 6 conecta os resultados à jornada principal. Ver [ROADMAP.md](ROADMAP.md).
+A camada `audio/` já contém captura de microfone, decodificação local de arquivo, métricas de sinal e visualização reativa. O ranking tonal local fica em `src/music-theory/keyDetector.ts`: ele extrai evidência por classes de altura no espectro e classifica as 24 tonalidades por perfis tonais. `ReadingQualityMeter` mantém uma medida separada, com peso maior para a estabilidade da evidência tonal e peso complementar para sinal fraco, silêncio e clipping. Ver [ROADMAP.md](ROADMAP.md).
 
 ## Licenciamento comercial
 

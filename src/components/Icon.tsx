@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-export type IconName = 'spark' | 'grid' | 'mic' | 'upload' | 'arrow' | 'metronome' | 'tuner' | 'transpose' | 'clock' | 'shield' | 'chevron';
+export type IconName = 'spark' | 'grid' | 'mic' | 'upload' | 'arrow' | 'metronome' | 'tuner' | 'transpose' | 'clock' | 'shield' | 'chevron' | 'stop';
 
 interface IconProps {
   name: IconName;
@@ -22,6 +22,7 @@ export function Icon({ name, size = 20 }: IconProps) {
     clock: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7v5l3.3 2" /></>,
     shield: <><path d="M12 3.2 19 6v5.3c0 4.4-2.8 7.9-7 9.5-4.2-1.6-7-5.1-7-9.5V6l7-2.8Z" /><path d="m8.9 12.1 2 2 4.2-4.2" /></>,
     chevron: <path d="m9 5 7 7-7 7" />,
+    stop: <rect x="6.2" y="6.2" width="11.6" height="11.6" rx="2" />,
   };
 
   return <svg {...common}>{paths[name]}</svg>;

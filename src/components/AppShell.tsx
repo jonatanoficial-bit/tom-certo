@@ -21,7 +21,7 @@ export function AppShell({ activeRoute, children, onNavigate }: AppShellProps) {
         </a>
         <div className="topbar__status" aria-label="Versão em desenvolvimento">
           <span className="status-pip" aria-hidden="true" />
-          <span>LAB 01</span>
+          <span>LAB 02</span>
         </div>
       </header>
 

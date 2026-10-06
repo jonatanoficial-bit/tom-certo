@@ -2,6 +2,18 @@
 
 Todas as mudanças relevantes deste projeto serão documentadas aqui.
 
+## [Unreleased]
+
+### Added
+
+- Fase 2 iniciada: captura local por microfone/arquivo, visualizador, métricas de sinal e tratamento de permissão.
+- Detector tonal local por cromagrama espectral e ranking das 24 tonalidades.
+- Resultado transparente com círculo do tom, tonalidade relativa e confiança de leitura priorizando estabilidade da evidência tonal.
+
+### Changed
+
+- Roadmap consolidado de 13 lotes em 4 fases, preservando os critérios técnicos e visuais como marcos internos.
+
 ## [0.1.0] — 2026-10-06
 
 ### Added
