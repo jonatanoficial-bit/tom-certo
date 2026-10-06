@@ -2,14 +2,14 @@
 
 ## Última atualização
 
-- **Versão:** 0.2.0
-- **Build:** 0200
-- **Fase atual:** 02 de 04
+- **Versão:** 0.3.0
+- **Build:** 0300
+- **Fase atual:** 03 de 04
 - **Data:** 2026-10-06
 
 ## Status
 
-O Lote 1 está concluído e a Fase 2 está em andamento. A aplicação agora possui captura e análise local iniciais; não há resultado demonstrativo ou resposta inventada.
+O Lote 1 está concluído. A Fase 2 segue em calibração de análise tonal e a Fase 3 foi iniciada com ferramentas locais para ritmo, cifras, capo e repertório. Não há resultado demonstrativo ou resposta inventada.
 
 ## Implementado
 
@@ -30,12 +30,16 @@ O Lote 1 está concluído e a Fase 2 está em andamento. A aplicação agora pos
 - detector tonal local baseado em cromagrama/FFT e ranking das 24 tonalidades;
 - resultado central com círculo do tom, relativa e indicador de confiança da leitura;
 - métrica de confiança que prioriza estabilidade da evidência tonal, não uma alegação arbitrária sobre o programa.
+- metrônomo por Web Audio com acento, BPM ajustável, Tap Tempo e fórmulas de compasso;
+- transpositor de cifras com acordes menores, extensões e baixo alternado;
+- calculadora de forma de violão para capotraste;
+- repertório local persistido no próprio dispositivo.
 
 ## Verificações executadas
 
 - `pnpm lint` — aprovado.
 - `pnpm typecheck` — aprovado.
-- `pnpm test` — aprovado: 4 arquivos / 11 testes.
+- `pnpm test` — aprovado: 6 arquivos / 16 testes.
 - `pnpm build` — aprovado: bundle Vite de produção gerado.
 - QA responsivo manual: 320, 360, 390, 412, 768 e 1440px sem overflow horizontal; Home, CTA e navegação verificados.
 
@@ -43,12 +47,11 @@ O Lote 1 está concluído e a Fase 2 está em andamento. A aplicação agora pos
 
 - validação calibrada em gravações musicais variadas e em dispositivos físicos;
 - análise melódica avançada, fusão de evidências e escala/campo harmônico detalhado;
-- persistência de análises, repertório ou histórico;
-- metrônomo, afinador, Tap Tempo, capotraste e transpositor funcionais.
+- afinador por nota em tempo real e preparação avançada de setlist;
 
 ## Próximo lote
 
-**Fase 2 — Jornada central de identificação.** A base de captura, ranking tonal e resultado transparente está implementada. Restam calibração com repertório real, análise melódica avançada e expansão do resultado musical antes de concluí-la.
+**Fase 3 — Kit do músico.** O núcleo de ritmo, cifras, capo e repertório está implementado. O próximo marco é o afinador em tempo real; a calibração da Fase 2 segue como trabalho de qualidade em paralelo.
 
 ## Decisão de planejamento
 
@@ -60,4 +63,4 @@ O plano original de 13 lotes foi consolidado em 4 fases para reduzir a quantidad
 - Avaliar Essentia.js versus DSP próprio para os motores posteriores, considerando tamanho de bundle e licença.
 - Gerar ícones PNG 192/512 antes da auditoria PWA final, para máxima interoperabilidade de instaladores.
 - Decidir modalidade comercial e implementar o serviço remoto de ativação antes de liberar vendas.
-- O repositório GitHub foi criado como privado. A conta atual informa que GitHub Pages exige tornar o repositório público ou fazer upgrade para um plano que suporte Pages privados; por isso o código e o workflow foram publicados, mas a URL pública ainda não foi gerada.
+- O repositório GitHub agora é público, portanto o próximo push deve habilitar a publicação do GitHub Pages pelo workflow existente.

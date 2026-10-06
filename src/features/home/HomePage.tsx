@@ -56,7 +56,7 @@ export function HomePage({ notify }: HomePageProps) {
       </section>
 
       <footer className="app-footer">
-        <span>TOM CERTO</span><i /> <span>v0.2.0 · Build 0200</span>
+        <span>TOM CERTO</span><i /> <span>v0.3.0 · Build 0300</span>
       </footer>
     </>
   );

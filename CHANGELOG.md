@@ -6,6 +6,7 @@ Todas as mudanças relevantes deste projeto serão documentadas aqui.
 
 ### Added
 
+- Fase 3 iniciada: metrônomo local, Tap Tempo, transpositor de cifras, cálculo de capo e repertório local.
 - Fase 2 iniciada: captura local por microfone/arquivo, visualizador, métricas de sinal e tratamento de permissão.
 - Detector tonal local por cromagrama espectral e ranking das 24 tonalidades.
 - Resultado transparente com círculo do tom, tonalidade relativa e confiança de leitura priorizando estabilidade da evidência tonal.

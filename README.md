@@ -2,7 +2,7 @@
 
 **Ouça. Descubra. Toque.**
 
-Tom Certo é um assistente musical comercial e local-first, pensado para descobrir a tonalidade de voz, instrumentos e músicas com uma experiência simples, rápida e bonita. O projeto está na **Fase 2 — jornada central de identificação**.
+Tom Certo é um assistente musical comercial e local-first, pensado para descobrir a tonalidade de voz, instrumentos e músicas com uma experiência simples, rápida e bonita. O projeto está na **Fase 3 — kit do músico**.
 
 ## O que já existe
 
@@ -18,6 +18,7 @@ Tom Certo é um assistente musical comercial e local-first, pensado para descobr
 - visualizador reativo, leitura de RMS, silêncio, sinal baixo e clipping;
 - ranking tonal local das 24 tonalidades maiores/menores por cromagrama espectral;
 - resultado transparente: tom principal, relativa e confiança baseada predominantemente na estabilidade da evidência tonal da própria leitura.
+- metrônomo local com Tap Tempo, transposição de cifras, calculadora de capo e repertório local.
 
 > Um resultado só é mostrado quando existem evidências tonais e qualidade de leitura suficientes. A porcentagem não é uma promessa de “acerto do programa”: ela descreve o sinal e, principalmente, a estabilidade das evidências daquele áudio.
 
