@@ -6,6 +6,7 @@ Todas as mudanças relevantes deste projeto serão documentadas aqui.
 
 ### Added
 
+- Afinador local em tempo real com detecção por autocorrelação, leitura de nota/oitava/cents e indicador visual de afinação.
 - Fase 4 iniciada: modo iniciante, modo culto com apresentação de alto contraste, preferências de contraste e status de conectividade.
 - Shell PWA atualizado com fallback de navegação offline e estratégia de cache renovada.
 - Direção visual editorial premium, sem imagens ou fontes externas que comprometam carregamento e uso local.

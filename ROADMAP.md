@@ -29,7 +29,7 @@ O primeiro núcleo reúne ferramentas que funcionam sem conexão:
 3. transposição de cifras, incluindo qualidade de acorde e baixo alternado;
 4. calculadora de forma para capotraste e repertório persistido somente no dispositivo.
 
-O afinador e a preparação de setlist avançada seguem como marcos desta fase. A Fase 2 permanece em calibração de análise tonal; avançar o kit não transforma aquele motor em versão final.
+O afinador local em tempo real foi entregue: mede frequência, nota, oitava, cents e direção de correção sem enviar ou gravar áudio. A preparação de setlist avançada segue como marco desta fase. A Fase 2 permanece em calibração de análise tonal; avançar o kit não transforma aquele motor em versão final.
 
 ## Fase 4 — experiência de palco e release
 
@@ -40,5 +40,6 @@ O primeiro marco desta fase está entregue no app:
 3. indicador online/offline, shell PWA atualizado e fallback para navegação offline após a primeira visita controlada pelo service worker;
 4. controles de contraste, link para pular ao conteúdo e relações de abas acessíveis;
 5. redesign editorial premium, pensado para uma marca internacional sem depender de imagens externas ou fontes remotas.
+6. afinador local integrado ao kit: autorização explícita de microfone, detecção por autocorrelação, leitura de frequência/nota/oitava/cents e pausa automática ao sair da tela.
 
 Antes de chamar a versão 1.0.0 de release final, ainda são obrigatórios: teste físico de microfone/instalação em Android e iOS, validação do cache em rede desligada, calibração do detector com gravações variadas e definição do serviço comercial de ativação.

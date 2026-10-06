@@ -22,6 +22,7 @@ Tom Certo é um assistente musical comercial e local-first, pensado para descobr
 - modo iniciante com uma jornada clara para quem está começando;
 - modo culto com apresentação de alto contraste de música, tom, capo e cifras;
 - preferência de contraste, status online/offline e shell offline atualizado.
+- afinador em tempo real local, com frequência, nota, oitava, cents e direção de ajuste.
 
 > Um resultado só é mostrado quando existem evidências tonais e qualidade de leitura suficientes. A porcentagem não é uma promessa de “acerto do programa”: ela descreve o sinal e, principalmente, a estabilidade das evidências daquele áudio.
 

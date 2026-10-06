@@ -1,9 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { tempoFromTaps } from '../../audio/metronome';
+import { tuningDirection } from '../../audio/pitchDetector';
 import { Button } from '../../components/Button';
 import { Icon } from '../../components/Icon';
 import type { ToastTone } from '../../components/Toast';
 import { useMetronome } from '../../hooks/useMetronome';
+import { useTuner } from '../../hooks/useTuner';
 import { capoShapeForKey, chromaticNotes, transposeProgression } from '../../music-theory/transposition';
 import { readLocal, saveLocal } from '../../storage/localStore';
 
@@ -12,7 +14,7 @@ interface ToolsPageProps {
   guided: boolean;
 }
 
-type ToolTab = 'rhythm' | 'transpose' | 'capo' | 'repertoire' | 'worship';
+type ToolTab = 'rhythm' | 'tuner' | 'transpose' | 'capo' | 'repertoire' | 'worship';
 
 interface RepertoireEntry {
   id: string;
@@ -24,6 +26,7 @@ interface RepertoireEntry {
 
 const TOOL_TABS: Array<{ id: ToolTab; label: string }> = [
   { id: 'rhythm', label: 'Ritmo' },
+  { id: 'tuner', label: 'Afinador' },
   { id: 'transpose', label: 'Cifras' },
   { id: 'capo', label: 'Capo' },
   { id: 'repertoire', label: 'Repertório' },
@@ -38,6 +41,7 @@ export function ToolsPage({ notify, guided }: ToolsPageProps) {
   const [beats, setBeats] = useState(4);
   const [tapTimes, setTapTimes] = useState<number[]>([]);
   const metronome = useMetronome(bpm, beats);
+  const tuner = useTuner();
   const [progression, setProgression] = useState('G  D  Em  C');
   const [transposeSteps, setTransposeSteps] = useState(0);
   const [capoKey, setCapoKey] = useState('G');
@@ -84,6 +88,13 @@ export function ToolsPage({ notify, guided }: ToolsPageProps) {
   const transposedProgression = transposeProgression(progression, transposeSteps);
   const capoShape = capoShapeForKey(capoKey, capo);
   const worshipSong = repertoire.find((song) => song.id === worshipSongId) ?? repertoire[0] ?? null;
+  const tunerDirection = tuner.reading ? tuningDirection(tuner.reading.cents) : null;
+  const tunerPosition = tuner.reading ? Math.max(4, Math.min(96, 50 + tuner.reading.cents)) : 50;
+
+  const selectTab = (nextTab: ToolTab) => {
+    if (tab === 'tuner' && nextTab !== 'tuner') void tuner.stop();
+    setTab(nextTab);
+  };
 
   return (
     <section className="tools-page" aria-labelledby="tools-page-title">
@@ -94,7 +105,7 @@ export function ToolsPage({ notify, guided }: ToolsPageProps) {
 
       <div className="tool-tabs" role="tablist" aria-label="Ferramentas musicais">
         {TOOL_TABS.map((item) => (
-          <button key={item.id} id={`tool-tab-${item.id}`} role="tab" type="button" aria-selected={tab === item.id} aria-controls={`tool-panel-${item.id}`} className={tab === item.id ? 'is-active' : ''} onClick={() => setTab(item.id)}>{item.label}</button>
+          <button key={item.id} id={`tool-tab-${item.id}`} role="tab" type="button" aria-selected={tab === item.id} aria-controls={`tool-panel-${item.id}`} className={tab === item.id ? 'is-active' : ''} onClick={() => selectTab(item.id)}>{item.label}</button>
         ))}
       </div>
 
@@ -108,6 +119,25 @@ export function ToolsPage({ notify, guided }: ToolsPageProps) {
           <div className="beat-selector" aria-label="Fórmula de compasso">{[2, 3, 4, 6].map((value) => <button key={value} type="button" className={beats === value ? 'is-active' : ''} onClick={() => setBeats(value)}>{value}/4</button>)}</div>
           <Button variant="primary" icon={metronome.isPlaying ? 'stop' : 'metronome'} onClick={() => { if (metronome.isPlaying) metronome.stop(); else void metronome.start(); }}>{metronome.isPlaying ? 'PARAR METRÔNOMO' : 'INICIAR METRÔNOMO'}</Button>
           {metronome.error ? <p className="tool-error" role="status">{metronome.error}</p> : null}
+        </section>
+      ) : null}
+
+      {tab === 'tuner' ? (
+        <section id="tool-panel-tuner" className="music-tool-panel tuner-panel" role="tabpanel" aria-labelledby="tool-tab-tuner">
+          <div className="music-tool-panel__heading"><span className="tool-mark"><Icon name="tuner" size={21} /></span><div><p>AFINADOR LOCAL</p><h2>Encontre sua nota</h2></div></div>
+          <p className="tuner-panel__intro">Use uma nota por vez. A leitura fica no seu dispositivo e não grava seu áudio.</p>
+          <div className={`tuner-readout ${tunerDirection ? `is-${tunerDirection}` : ''}`} aria-live="polite" aria-label={tuner.reading ? `Nota ${tuner.reading.note}${tuner.reading.octave}, ${tuner.reading.cents} cents` : 'Aguardando uma nota'}>
+            <div className="tuner-readout__orbit" aria-hidden="true"><i /><i /><i /></div>
+            <span className="tuner-readout__label">NOTA</span>
+            <strong>{tuner.reading?.note ?? '—'}<sup>{tuner.reading ? tuner.reading.octave : ''}</sup></strong>
+            <small>{tuner.reading ? `${Math.round(tuner.reading.frequency)} Hz` : 'OUVINDO O SILÊNCIO'}</small>
+          </div>
+          <div className="tuner-meter" aria-label={tuner.reading ? `${tuner.reading.cents} cents em relação à afinação` : 'Medidor de afinação'}>
+            <span>−50</span><div className="tuner-meter__track"><i style={{ left: `${tunerPosition}%` }} /></div><span>+50</span>
+          </div>
+          <p className={`tuner-direction ${tunerDirection ? `is-${tunerDirection}` : ''}`}>{tunerDirection === 'flat' ? `SUBA ${Math.abs(tuner.reading?.cents ?? 0)} CENTS` : tunerDirection === 'sharp' ? `DESÇA ${Math.abs(tuner.reading?.cents ?? 0)} CENTS` : tunerDirection === 'in-tune' ? 'AFINADO' : 'TOQUE UMA NOTA SUSTENTADA'}</p>
+          <Button variant="primary" icon={tuner.phase === 'listening' ? 'stop' : 'tuner'} disabled={tuner.phase === 'requesting-permission'} onClick={() => { if (tuner.phase === 'listening') void tuner.stop(); else void tuner.start(); }}>{tuner.phase === 'listening' ? 'PARAR AFINADOR' : tuner.phase === 'requesting-permission' ? 'PREPARANDO MICROFONE' : 'INICIAR AFINADOR'}</Button>
+          <p className={`tuner-status ${tuner.phase === 'error' ? 'is-error' : ''}`} role="status">{tuner.message}</p>
         </section>
       ) : null}
 

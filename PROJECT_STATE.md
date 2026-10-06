@@ -2,8 +2,8 @@
 
 ## Última atualização
 
-- **Versão:** 0.4.0
-- **Build:** 0400
+- **Versão:** 0.5.0
+- **Build:** 0500
 - **Fase atual:** 04 de 04 — em andamento
 - **Data:** 2026-10-06
 
@@ -39,12 +39,14 @@ O Lote 1 está concluído. As Fases 2 e 3 têm seus núcleos funcionais locais; 
 - indicador de conectividade, controle de contraste, link de pular para conteúdo e semântica de abas aprimorada;
 - service worker atualizado com navegação network-first e fallback de shell em offline após cache inicial;
 - direção visual editorial premium por CSS: profundidade tonal, grade de sinal, superfícies próprias e sem dependências remotas.
+- afinador em tempo real local: leitura de frequência, nota, oitava e cents, com indicação para subir/descer a afinação;
+- pausa automática do afinador ao trocar de ferramenta, ocultar a página ou parar a sessão.
 
 ## Verificações executadas
 
 - `pnpm lint` — aprovado.
 - `pnpm typecheck` — aprovado.
-- `pnpm test` — aprovado: 7 arquivos / 18 testes.
+- `pnpm test` — aprovado: 8 arquivos / 21 testes.
 - `pnpm build` — aprovado: bundle Vite de produção gerado.
 - QA responsivo manual: 320, 360, 390, 412, 768 e 1440px sem overflow horizontal; Home, CTA e navegação verificados.
 
@@ -56,7 +58,7 @@ O Lote 1 está concluído. As Fases 2 e 3 têm seus núcleos funcionais locais; 
 
 ## Próximo lote
 
-**Fase 4 — validação de release.** Validar em aparelhos físicos: instalação PWA, primeiro cache offline, permissões de microfone e contraste. O afinador em tempo real e a preparação avançada de setlist permanecem marcos funcionais pendentes.
+**Fase 4 — validação de release.** Validar em aparelhos físicos: instalação PWA, primeiro cache offline, permissões de microfone, afinador e contraste. A preparação avançada de setlist permanece como próximo marco funcional.
 
 ## Decisão de planejamento
 
