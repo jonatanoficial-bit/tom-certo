@@ -6,7 +6,7 @@
 2. Em **Settings → Pages**, selecione **GitHub Actions** como fonte de deploy.
 3. Faça push para `main` ou execute manualmente o workflow **Deploy Tom Certo to GitHub Pages**.
 
-O arquivo `.github/workflows/deploy.yml` instala dependências com `pnpm install --frozen-lockfile`, executa lint, typecheck, testes e build, e só publica se tudo passar.
+O arquivo `.github/workflows/deploy.yml` habilita o GitHub Pages na primeira execução, instala dependências com `pnpm install --frozen-lockfile`, executa lint, typecheck, testes e build, e só publica se tudo passar.
 
 ## Caminho de assets
 
