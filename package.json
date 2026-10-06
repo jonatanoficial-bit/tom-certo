@@ -1,7 +1,7 @@
 {
   "name": "tom-certo",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "description": "Tom Certo — assistente musical inteligente, local-first e instalável.",
   "packageManager": "pnpm@11.19.0",

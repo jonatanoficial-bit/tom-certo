@@ -1,7 +1,7 @@
 {
   "name": "Tom Certo",
   "short_name": "Tom Certo",
-  "description": "Ouça. Descubra. Toque.",
+  "description": "Assistente musical local para descobrir o tom, preparar cifras e tocar sem internet.",
   "lang": "pt-BR",
   "start_url": "./#/",
   "scope": "./",

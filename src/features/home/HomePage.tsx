@@ -1,9 +1,9 @@
 import { Icon } from '../../components/Icon';
-import type { ToastTone } from '../../components/Toast';
 import { ListeningPanel } from '../listening/ListeningPanel';
 
 interface HomePageProps {
-  notify: (message: string, tone?: ToastTone) => void;
+  guided: boolean;
+  onOpenTools: () => void;
 }
 
 const upcomingTools = [
@@ -12,10 +12,12 @@ const upcomingTools = [
   { title: 'Transpor', detail: 'Mude sem complicar', icon: 'transpose' as const },
 ];
 
-export function HomePage({ notify }: HomePageProps) {
+export function HomePage({ guided, onOpenTools }: HomePageProps) {
   return (
     <>
       <section className="hero" aria-labelledby="hero-title">
+        <span className="hero__edition" aria-hidden="true">01 — TONALIDADE</span>
+        <div className="hero__sound-lines" aria-hidden="true"><i /><i /><i /><i /></div>
         <div className="hero__eyebrow"><span /> ASSISTENTE MUSICAL INTELIGENTE</div>
         <h1 id="hero-title">Qual é<br /><em>o tom?</em></h1>
         <p className="hero__intro">Cante, toque ou reproduza uma música. O Tom Certo mostra para onde ela quer chegar.</p>
@@ -36,17 +38,32 @@ export function HomePage({ notify }: HomePageProps) {
         </div>
       </section>
 
+      {guided ? (
+        <section className="guided-card" aria-labelledby="guided-title">
+          <div>
+            <p className="section-label">MODO INICIANTE</p>
+            <h2 id="guided-title">Comece em<br /><span>três passos.</span></h2>
+          </div>
+          <ol>
+            <li><span>1</span><p><strong>Faça uma leitura</strong> — cante ou toque um trecho com som limpo.</p></li>
+            <li><span>2</span><p><strong>Olhe a evidência tonal</strong> — a porcentagem explica a qualidade daquela leitura.</p></li>
+            <li><span>3</span><p><strong>Prepare a música</strong> — use ritmo, cifras, capo ou repertório.</p></li>
+          </ol>
+          <button className="guided-card__action" type="button" onClick={onOpenTools}>ABRIR FERRAMENTAS <Icon name="arrow" size={16} /></button>
+        </section>
+      ) : null}
+
       <section className="tool-preview" aria-labelledby="tools-title">
         <div className="section-heading">
           <div>
             <p className="section-label">NO SEU RITMO</p>
             <h2 id="tools-title">Ferramentas musicais</h2>
           </div>
-          <span className="planned-badge">EM BREVE</span>
+          <button className="planned-badge" type="button" onClick={onOpenTools}>ABRIR KIT</button>
         </div>
         <div className="tool-list">
           {upcomingTools.map((tool) => (
-            <button key={tool.title} className="tool-item" type="button" onClick={() => notify(`${tool.title} será habilitado nas próximas fases.`, 'neutral')}>
+            <button key={tool.title} className="tool-item" type="button" onClick={onOpenTools}>
               <span className="tool-item__icon"><Icon name={tool.icon} size={22} /></span>
               <span className="tool-item__copy"><strong>{tool.title}</strong><small>{tool.detail}</small></span>
               <Icon name="chevron" size={18} />
@@ -56,7 +73,7 @@ export function HomePage({ notify }: HomePageProps) {
       </section>
 
       <footer className="app-footer">
-        <span>TOM CERTO</span><i /> <span>v0.3.0 · Build 0300</span>
+        <span>TOM CERTO</span><i /> <span>v0.4.0 · Build 0400</span>
       </footer>
     </>
   );

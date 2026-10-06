@@ -36,6 +36,8 @@ export function ListeningPanel() {
     <>
       <div className={`signal-card signal-card--${phase}`}>
         <div className="signal-card__glow" aria-hidden="true" />
+        <div className="signal-card__grid" aria-hidden="true" />
+        <div className="signal-card__signature" aria-hidden="true"><span>TC</span><i /><span>ANÁLISE TONAL</span></div>
         <div className="signal-card__topline">
           <span className={`live-dot ${isLive ? 'is-live' : ''}`} aria-hidden="true" />
           <span>{header}</span>

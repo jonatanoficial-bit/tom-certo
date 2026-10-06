@@ -6,6 +6,9 @@ Todas as mudanças relevantes deste projeto serão documentadas aqui.
 
 ### Added
 
+- Fase 4 iniciada: modo iniciante, modo culto com apresentação de alto contraste, preferências de contraste e status de conectividade.
+- Shell PWA atualizado com fallback de navegação offline e estratégia de cache renovada.
+- Direção visual editorial premium, sem imagens ou fontes externas que comprometam carregamento e uso local.
 - Fase 3 iniciada: metrônomo local, Tap Tempo, transpositor de cifras, cálculo de capo e repertório local.
 - Fase 2 iniciada: captura local por microfone/arquivo, visualizador, métricas de sinal e tratamento de permissão.
 - Detector tonal local por cromagrama espectral e ranking das 24 tonalidades.

@@ -2,14 +2,14 @@
 
 ## Última atualização
 
-- **Versão:** 0.3.0
-- **Build:** 0300
-- **Fase atual:** 03 de 04
+- **Versão:** 0.4.0
+- **Build:** 0400
+- **Fase atual:** 04 de 04 — em andamento
 - **Data:** 2026-10-06
 
 ## Status
 
-O Lote 1 está concluído. A Fase 2 segue em calibração de análise tonal e a Fase 3 foi iniciada com ferramentas locais para ritmo, cifras, capo e repertório. Não há resultado demonstrativo ou resposta inventada.
+O Lote 1 está concluído. As Fases 2 e 3 têm seus núcleos funcionais locais; a Fase 4 foi iniciada com experiência guiada, modo culto, melhorias offline, acessibilidade e nova direção visual. A calibração tonal em gravações reais não foi declarada concluída.
 
 ## Implementado
 
@@ -34,12 +34,17 @@ O Lote 1 está concluído. A Fase 2 segue em calibração de análise tonal e a 
 - transpositor de cifras com acordes menores, extensões e baixo alternado;
 - calculadora de forma de violão para capotraste;
 - repertório local persistido no próprio dispositivo.
+- modo iniciante persistido, com caminho de três passos e orientação contextual no kit musical;
+- modo culto: seleção de música do repertório e apresentação de alto contraste com tom, capo e cifra;
+- indicador de conectividade, controle de contraste, link de pular para conteúdo e semântica de abas aprimorada;
+- service worker atualizado com navegação network-first e fallback de shell em offline após cache inicial;
+- direção visual editorial premium por CSS: profundidade tonal, grade de sinal, superfícies próprias e sem dependências remotas.
 
 ## Verificações executadas
 
 - `pnpm lint` — aprovado.
 - `pnpm typecheck` — aprovado.
-- `pnpm test` — aprovado: 6 arquivos / 16 testes.
+- `pnpm test` — aprovado: 7 arquivos / 18 testes.
 - `pnpm build` — aprovado: bundle Vite de produção gerado.
 - QA responsivo manual: 320, 360, 390, 412, 768 e 1440px sem overflow horizontal; Home, CTA e navegação verificados.
 
@@ -51,7 +56,7 @@ O Lote 1 está concluído. A Fase 2 segue em calibração de análise tonal e a 
 
 ## Próximo lote
 
-**Fase 3 — Kit do músico.** O núcleo de ritmo, cifras, capo e repertório está implementado. O próximo marco é o afinador em tempo real; a calibração da Fase 2 segue como trabalho de qualidade em paralelo.
+**Fase 4 — validação de release.** Validar em aparelhos físicos: instalação PWA, primeiro cache offline, permissões de microfone e contraste. O afinador em tempo real e a preparação avançada de setlist permanecem marcos funcionais pendentes.
 
 ## Decisão de planejamento
 
