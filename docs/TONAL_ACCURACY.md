@@ -24,11 +24,14 @@ O processamento local combina:
 - agrupamento de série harmônica na nota fundamental e cromagrama de picos espectrais, para piano, violão e voz não empurrarem o resultado para um harmônico;
 - piso de ruído adaptativo por janela: som ambiente amplo do palco não é contado como se fosse nota musical; somente picos acima do piso entram como evidência;
 - faixa de microfone ajustada para níveis baixos, sem ativar supressão de ruído ou ganho automático que poderiam alterar a harmonia de uma apresentação ao vivo;
+- trilha melódica para voz e linhas únicas: estima a frequência fundamental, aplica mediana curta contra vibrato e consoantes e prioriza as classes de nota fundamentais sobre formantes e harmônicos vocais;
 - correção média de desafinação do instrumento antes de classificar as notas;
 - perfil tonal maior/menor, separação entre hipóteses, diversidade de classes de nota e estabilidade temporal;
 - janela de 15 segundos e bloqueio de resultado tonal curto ou ambíguo.
 
 Quando existe uma hipótese musical, mas faltam estabilidade, tempo ou diversidade de notas para confirmá-la, a tela a mostra como **hipótese em validação**. Isso evita tanto ocultar uma leitura útil quanto apresentar uma sugestão fraca como certeza.
+
+Uma voz **cantada** tem frequência fundamental e pode alimentar a trilha melódica. Um sussurro puro não tem altura musical estável; nesse caso nenhum software consegue deduzir com segurança o tom a partir apenas da voz. Para uma leitura vocal mais confiável, cante um trecho completo e, quando possível, deixe um instrumento ou playback harmônico audível junto.
 
 O afinador usa um estimador YIN monofônico, suavização por mediana e só mostra nota quando a periodicidade é suficiente.
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AudioCaptureController, audioErrorMessage } from '../audio/audioCaptureController';
 import { CAPTURE_WINDOW_MS, captureProgressFor, hasEnoughCaptureTime } from '../audio/capturePolicy';
+import { estimatePitch } from '../audio/pitchDetector';
 import { measureTimeDomainSignal } from '../audio/signalMetrics';
 import { EMPTY_READING_QUALITY, ReadingQualityMeter, type ReadingQuality } from '../audio/readingQuality';
 import type { ActiveAudioSession, AudioCapturePhase, AudioSignalMetrics } from '../audio/types';
@@ -131,9 +132,11 @@ export function useAudioCapture() {
   useEffect(() => {
     if (!session) return;
     const samples = new Uint8Array(session.analyser.fftSize);
+    const melodicSamples = new Float32Array(session.analyser.fftSize);
     const spectrum = new Float32Array(session.analyser.frequencyBinCount);
     let animationFrame = 0;
     let lastSampleAt = 0;
+    let lastMelodicSampleAt = 0;
     let lastProgressAt = 0;
 
     const measure = (now: number) => {
@@ -154,6 +157,12 @@ export function useAudioCapture() {
         if (signal.state !== 'clipping') {
           session.analyser.getFloatFrequencyData(spectrum);
           candidate = detectorRef.current.ingestSpectrum(spectrum, session.sampleRate, session.analyser.fftSize);
+        }
+        if (signal.state !== 'clipping' && now - lastMelodicSampleAt >= 240) {
+          session.analyser.getFloatTimeDomainData(melodicSamples);
+          const pitch = estimatePitch(melodicSamples, session.sampleRate, 65, 1_100);
+          if (pitch) candidate = detectorRef.current.ingestMelodicPitch(pitch.frequency, pitch.clarity);
+          lastMelodicSampleAt = now;
         }
         qualityRef.current.record(signal, candidate);
         setDetection(candidate);

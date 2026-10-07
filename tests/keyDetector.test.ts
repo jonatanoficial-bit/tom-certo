@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isReliableDetection, LocalKeyDetector, rankChromagram, relativeKeyFor } from '../src/music-theory/keyDetector';
+import { isReliableDetection, keySymbolFor, LocalKeyDetector, rankChromagram, relativeKeyFor } from '../src/music-theory/keyDetector';
 
 function spectrumForCMajorChord(sampleRate = 44_100, fftSize = 4_096, detuningCents = 0, backgroundDecibels = -96): Float32Array {
   const spectrum = new Float32Array(fftSize / 2).fill(backgroundDecibels);
@@ -39,7 +39,12 @@ describe('rankChromagram', () => {
   it('shows the correct relative minor for a major result', () => {
     const result = rankChromagram([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88]);
 
-    expect(result && relativeKeyFor(result)).toEqual({ label: 'A menor', relation: 'RELATIVA MENOR' });
+    expect(result && relativeKeyFor(result)).toEqual({ label: 'A menor', symbol: 'Am', relation: 'RELATIVA MENOR' });
+  });
+
+  it('uses compact international symbols for major and minor keys', () => {
+    expect(keySymbolFor({ tonic: 7, mode: 'minor' })).toBe('Gm');
+    expect(keySymbolFor({ tonic: 6, mode: 'major' })).toBe('F#');
   });
 
   it('uses a piano-like harmonic series to retain a C major chord root', () => {
@@ -77,5 +82,19 @@ describe('rankChromagram', () => {
 
     expect(detector.frames).toBe(0);
     expect(detector.estimate()).toBeNull();
+  });
+
+  it('keeps a vibrato-rich D major melody centred on D instead of its F# note', () => {
+    const detector = new LocalKeyDetector();
+    const melodyMidi = [62, 64, 66, 67, 69, 71, 73, 74, 73, 71, 69, 67, 66, 64, 62];
+
+    for (const midi of melodyMidi) {
+      for (const vibratoCents of [-24, 13, 27, -18, 6]) {
+        const frequency = 440 * (2 ** ((midi - 69 + (vibratoCents / 100)) / 12));
+        detector.ingestMelodicPitch(frequency, .91);
+      }
+    }
+
+    expect(detector.estimate()?.label).toBe('D maior');
   });
 });

@@ -3,6 +3,7 @@ export type KeyMode = 'major' | 'minor';
 export interface KeyCandidate {
   tonic: number;
   tonicName: string;
+  symbol: string;
   mode: KeyMode;
   label: string;
   score: number;
@@ -15,6 +16,7 @@ export interface KeyDetection extends KeyCandidate {
 }
 
 const TONIC_NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'] as const;
+const TONIC_SYMBOLS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const;
 const MAJOR_PROFILE = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88] as const;
 const MINOR_PROFILE = [6.33, 2.68, 3.52, 5.38, 2.6, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17] as const;
 const MIN_FREQUENCY = 55;
@@ -30,6 +32,11 @@ function clamp(value: number, lower = 0, upper = 1): number {
 
 function keyLabel(tonic: number, mode: KeyMode): string {
   return `${TONIC_NAMES[tonic]} ${mode === 'major' ? 'maior' : 'menor'}`;
+}
+
+/** Compact international spelling for the primary result, such as C, F# or Gm. */
+export function keySymbolFor(detection: Pick<KeyCandidate, 'tonic' | 'mode'>): string {
+  return `${TONIC_SYMBOLS[detection.tonic]}${detection.mode === 'minor' ? 'm' : ''}`;
 }
 
 function correlation(left: readonly number[], right: readonly number[]): number {
@@ -60,6 +67,7 @@ function candidateFor(chromagram: readonly number[], tonic: number, mode: KeyMod
   return {
     tonic,
     tonicName: TONIC_NAMES[tonic],
+    symbol: keySymbolFor({ tonic, mode }),
     mode,
     label: keyLabel(tonic, mode),
     score: correlation(chromagram, rotatedProfile(profile, tonic)),
@@ -172,32 +180,54 @@ export function rankChromagram(chromagram: ArrayLike<number>): KeyDetection | nu
   };
 }
 
-export function relativeKeyFor(detection: Pick<KeyDetection, 'tonic' | 'mode'>): { label: string; relation: string } {
+export function relativeKeyFor(detection: Pick<KeyDetection, 'tonic' | 'mode'>): { label: string; symbol: string; relation: string } {
   const relativeIsMinor = detection.mode === 'major';
   const tonic = (detection.tonic + (relativeIsMinor ? 9 : 3)) % 12;
   const mode: KeyMode = relativeIsMinor ? 'minor' : 'major';
   return {
     label: keyLabel(tonic, mode),
+    symbol: keySymbolFor({ tonic, mode }),
     relation: relativeIsMinor ? 'RELATIVA MENOR' : 'RELATIVA MAIOR',
   };
 }
 
 /** Accumulates spectral evidence without sending audio or features to a server. */
 export class LocalKeyDetector {
-  private readonly chromagram = new Float64Array(12);
+  private readonly spectralChromagram = new Float64Array(12);
+  private readonly melodicChromagram = new Float64Array(12);
+  private readonly recentMelodicMidi: number[] = [];
   private analyzedFrames = 0;
+  private melodicFrames = 0;
 
   get frames(): number {
     return this.analyzedFrames;
   }
 
   reset(): void {
-    this.chromagram.fill(0);
+    this.spectralChromagram.fill(0);
+    this.melodicChromagram.fill(0);
+    this.recentMelodicMidi.splice(0);
     this.analyzedFrames = 0;
+    this.melodicFrames = 0;
   }
 
   estimate(): KeyDetection | null {
-    return rankChromagram(this.chromagram);
+    const spectralEvidence = normalizeChromagram(this.spectralChromagram);
+    const melodicEvidence = normalizeChromagram(this.melodicChromagram);
+    if (!spectralEvidence && !melodicEvidence) return null;
+
+    // A clean fundamental is a more faithful representation of a sung melody
+    // than its vocal formants and overtones. Chords still retain their richer
+    // spectral path; once enough monophonic frames exist, voice pitch classes
+    // receive the majority of the final profile.
+    const melodicWeight = melodicEvidence && this.melodicFrames >= 6 ? .68 : 0;
+    const combined = new Float64Array(12);
+    for (let index = 0; index < combined.length; index += 1) {
+      combined[index] = melodicEvidence && spectralEvidence
+        ? (melodicEvidence[index] * melodicWeight) + (spectralEvidence[index] * (1 - melodicWeight))
+        : (melodicEvidence?.[index] ?? spectralEvidence?.[index] ?? 0);
+    }
+    return rankChromagram(combined);
   }
 
   ingestSpectrum(spectrum: Float32Array, sampleRate: number, fftSize: number): KeyDetection | null {
@@ -237,13 +267,36 @@ export class LocalKeyDetector {
     const harmonicEvidence = normalizeChromagram(harmonicChroma);
     const peakEvidence = normalizeChromagram(spectralPeakChromagram(spectrum, sampleRate, fftSize, detuningCents, noiseFloor));
     if (harmonicEvidence || peakEvidence) {
-      for (let index = 0; index < this.chromagram.length; index += 1) {
-        this.chromagram[index] += harmonicEvidence && peakEvidence
+      for (let index = 0; index < this.spectralChromagram.length; index += 1) {
+        this.spectralChromagram[index] += harmonicEvidence && peakEvidence
           ? (harmonicEvidence[index] * .68) + (peakEvidence[index] * .32)
           : (harmonicEvidence?.[index] ?? peakEvidence?.[index] ?? 0);
       }
       this.analyzedFrames += 1;
     }
+    return this.estimate();
+  }
+
+  /**
+   * Adds fundamental pitch evidence for a voice or a single melodic line.
+   * A five-reading median absorbs ordinary vibrato and brief consonant noise
+   * before notes are quantized to pitch classes.
+   */
+  ingestMelodicPitch(frequency: number, clarity: number): KeyDetection | null {
+    if (!Number.isFinite(frequency) || frequency < 65 || frequency > 1_100 || clarity < .64) return this.estimate();
+
+    const midi = 69 + (12 * Math.log2(frequency / 440));
+    this.recentMelodicMidi.push(midi);
+    if (this.recentMelodicMidi.length > 5) this.recentMelodicMidi.shift();
+    const ordered = [...this.recentMelodicMidi].sort((left, right) => left - right);
+    const stableMidi = ordered[Math.floor(ordered.length / 2)];
+    const pitchClass = ((Math.round(stableMidi) % 12) + 12) % 12;
+
+    // Clarity reflects periodicity, so breath, unpitched consonants and a
+    // noisy room contribute substantially less than sustained sung notes.
+    this.melodicChromagram[pitchClass] += clarity ** 1.4;
+    this.melodicFrames += 1;
+    this.analyzedFrames += 1;
     return this.estimate();
   }
 }

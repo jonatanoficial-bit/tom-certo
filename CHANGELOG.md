@@ -6,6 +6,8 @@ Todas as mudanças relevantes deste projeto serão documentadas aqui.
 
 ### Added
 
+- Trilha melódica para voz: extrai a frequência fundamental localmente, usa mediana de cinco leituras para absorver vibrato e dá mais peso às classes de nota cantadas do que aos harmônicos vocais.
+- Notação compacta internacional no resultado tonal: `C`, `F#`, `Gm`, inclusive para relativas e hipóteses próximas.
 - Detector tonal reforçado para palco: piso de ruído adaptativo, combinação de evidência harmônica e picos espectrais e teste que rejeita ruído ambiente plano como tonalidade.
 - Faixa útil de microfone ampliada para níveis baixos sem habilitar ganho automático; quadros silenciosos ainda não contam como evidência tonal.
 - Exibição transparente da hipótese tonal quando há notas detectadas, mas a leitura ainda não é estável o bastante para confirmar o tom.

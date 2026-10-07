@@ -64,8 +64,8 @@ export function ListeningPanel() {
         ) : hasCandidate && detection ? (
           <div className={`key-wheel ${hasReliableDetection ? '' : 'key-wheel--provisional'}`} aria-label={`${hasReliableDetection ? 'Tom identificado' : 'Hipótese tonal'}: ${detection.label}`}>
             <span className="key-wheel__label">{hasReliableDetection ? 'TOM' : 'HIPÓTESE'}</span>
-            <strong>{detection.tonicName}</strong>
-            <small>{detection.mode === 'major' ? 'MAIOR' : 'MENOR'}</small>
+            <strong>{detection.symbol}</strong>
+            <small>TONALIDADE DETECTADA</small>
           </div>
         ) : (
           <div className="signal-orbit" aria-hidden="true">
@@ -85,22 +85,22 @@ export function ListeningPanel() {
           {hasReliableDetection && detection ? (
             <>
               <div className="key-result__details">
-                <div><span>{relativeKey?.relation}</span><strong>{relativeKey?.label}</strong></div>
+                <div><span>{relativeKey?.relation}</span><strong>{relativeKey?.symbol}</strong></div>
                 <div><span>CONFIANÇA DA LEITURA</span><strong>{Math.round(readingQuality.score * 100)}%</strong></div>
               </div>
               <div className="quality-bar" aria-label={`Confiança da leitura: ${Math.round(readingQuality.score * 100)}%`}><span style={{ width: `${Math.round(readingQuality.score * 100)}%` }} /></div>
               <p>{readingQuality.summary} A evidência tonal tem mais peso que o volume do áudio nesta porcentagem.</p>
-              <small>Hipóteses próximas: {detection.alternatives.slice(0, 2).map((alternative) => alternative.label).join(' · ')}</small>
+              <small>Hipóteses próximas: {detection.alternatives.slice(0, 2).map((alternative) => alternative.symbol).join(' · ')}</small>
             </>
           ) : detection ? (
             <>
               <div className="key-result__details">
-                <div><span>HIPÓTESE ATUAL</span><strong>{detection.label}</strong></div>
+                <div><span>HIPÓTESE ATUAL</span><strong>{detection.symbol}</strong></div>
                 <div><span>EVIDÊNCIA TONAL</span><strong>{Math.round(detection.confidence * 100)}%</strong></div>
               </div>
               <div className="quality-bar" aria-label={`Evidência tonal: ${Math.round(detection.confidence * 100)}%`}><span style={{ width: `${Math.round(detection.confidence * 100)}%` }} /></div>
               <p>Há notas musicais suficientes para sugerir este tom, mas a leitura ainda variou demais para confirmá-lo. Não use esta hipótese como resultado final.</p>
-              <small>{detection.pitchClassCount} classes de nota encontradas · Próximas: {detection.alternatives.slice(0, 2).map((alternative) => alternative.label).join(' · ')}</small>
+              <small>{detection.pitchClassCount} classes de nota encontradas · Próximas: {detection.alternatives.slice(0, 2).map((alternative) => alternative.symbol).join(' · ')}</small>
             </>
           ) : (
             <p>Não vamos adivinhar: toque ou envie um trecho com alguns acordes e menos ruído para chegar a uma tonalidade confiável.</p>
