@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tom-certo-shell-v0.6.2';
+const CACHE_NAME = 'tom-certo-shell-v0.6.3';
 const scopeUrl = new URL(self.registration.scope);
 const shellUrl = new URL('./index.html', scopeUrl).toString();
 const appShell = [

@@ -2,8 +2,8 @@
 
 ## Última atualização
 
-- **Versão:** 0.6.2
-- **Build:** 0602
+- **Versão:** 0.6.3
+- **Build:** 0603
 - **Fase atual:** 04 de 04 — em andamento
 - **Data:** 2026-10-07
 
@@ -49,12 +49,13 @@ O Lote 1 está concluído. As Fases 2 e 3 têm seus núcleos funcionais locais; 
 - faixa útil de microfone ampliada para níveis baixos; o detector continua a rejeitar silêncio sem picos musicais.
 - trilha tonal melódica: frequência fundamental local para voz/linhas únicas, mediana curta contra vibrato e mistura ponderada com o motor harmônico de instrumentos;
 - resultado em notação internacional compacta (`C`, `F#`, `Gm`) para evitar separar raiz e modo visualmente.
+- interpretação de frase para melodia isolada: duração de nota, pausas, finais sustentados e resolução melódica leve; o sinal só entra nessa trilha se for monofônico o bastante, preservando acordes no caminho harmônico.
 
 ## Verificações executadas
 
 - `pnpm lint` — aprovado.
 - `pnpm typecheck` — aprovado.
-- `pnpm test` — aprovado: 10 arquivos / 33 testes.
+- `pnpm test` — aprovado: 10 arquivos / 35 testes.
 - `pnpm build` — aprovado: bundle Vite de produção gerado.
 - QA responsivo manual: 320, 360, 390, 412, 768 e 1440px sem overflow horizontal; Home, CTA e navegação verificados.
 

@@ -62,7 +62,7 @@ function rotatedProfile(profile: readonly number[], tonic: number): number[] {
   return Array.from({ length: 12 }, (_, pitchClass) => profile[(pitchClass - tonic + 12) % 12]);
 }
 
-function candidateFor(chromagram: readonly number[], tonic: number, mode: KeyMode): KeyCandidate {
+function candidateFor(chromagram: readonly number[], tonic: number, mode: KeyMode, tonicHint = 0): KeyCandidate {
   const profile = mode === 'major' ? MAJOR_PROFILE : MINOR_PROFILE;
   return {
     tonic,
@@ -70,7 +70,10 @@ function candidateFor(chromagram: readonly number[], tonic: number, mode: KeyMod
     symbol: keySymbolFor({ tonic, mode }),
     mode,
     label: keyLabel(tonic, mode),
-    score: correlation(chromagram, rotatedProfile(profile, tonic)),
+    // The profile remains the main score. A phrase-ending hint is deliberately
+    // small: it helps a melodic cadence break relative-key ties without
+    // allowing one final note to override the rest of the melody.
+    score: correlation(chromagram, rotatedProfile(profile, tonic)) + (tonicHint * .14),
   };
 }
 
@@ -156,16 +159,17 @@ function spectralPeakChromagram(spectrum: Float32Array, sampleRate: number, fftS
  * It is deliberately evidence-first: consumers decide when enough frames and
  * pitch classes have accumulated to call the answer reliable.
  */
-export function rankChromagram(chromagram: ArrayLike<number>): KeyDetection | null {
+function rankChromagramWithTonicHints(chromagram: ArrayLike<number>, tonicHints?: ArrayLike<number>): KeyDetection | null {
   if (chromagram.length !== 12) throw new Error('A chromagram must contain 12 pitch classes.');
   const source = Array.from(chromagram, (value) => Math.max(0, value));
   const total = source.reduce((sum, value) => sum + value, 0);
   if (total <= 0) return null;
 
   const normalized = source.map((value) => value / total);
+  const hintTotal = tonicHints ? Array.from(tonicHints, (value) => Math.max(0, value)).reduce((sum, value) => sum + value, 0) : 0;
   const candidates = Array.from({ length: 12 }, (_, tonic) => [
-    candidateFor(normalized, tonic, 'major'),
-    candidateFor(normalized, tonic, 'minor'),
+    candidateFor(normalized, tonic, 'major', hintTotal > 0 ? Math.max(0, tonicHints?.[tonic] ?? 0) / hintTotal : 0),
+    candidateFor(normalized, tonic, 'minor', hintTotal > 0 ? Math.max(0, tonicHints?.[tonic] ?? 0) / hintTotal : 0),
   ]).flat().sort((left, right) => right.score - left.score);
   const [best, second] = candidates;
   const pitchClassCount = normalized.filter((value) => value >= .045).length;
@@ -178,6 +182,10 @@ export function rankChromagram(chromagram: ArrayLike<number>): KeyDetection | nu
     pitchClassCount,
     alternatives: candidates.slice(1, 4),
   };
+}
+
+export function rankChromagram(chromagram: ArrayLike<number>): KeyDetection | null {
+  return rankChromagramWithTonicHints(chromagram);
 }
 
 export function relativeKeyFor(detection: Pick<KeyDetection, 'tonic' | 'mode'>): { label: string; symbol: string; relation: string } {
@@ -195,9 +203,14 @@ export function relativeKeyFor(detection: Pick<KeyDetection, 'tonic' | 'mode'>):
 export class LocalKeyDetector {
   private readonly spectralChromagram = new Float64Array(12);
   private readonly melodicChromagram = new Float64Array(12);
+  private readonly melodicCadenceHints = new Float64Array(12);
   private readonly recentMelodicMidi: number[] = [];
   private analyzedFrames = 0;
   private melodicFrames = 0;
+  private activeMelodicPitchClass: number | null = null;
+  private precedingMelodicPitchClass: number | null = null;
+  private activeMelodicStartedAt = 0;
+  private lastMelodicObservedAt = 0;
 
   get frames(): number {
     return this.analyzedFrames;
@@ -206,9 +219,14 @@ export class LocalKeyDetector {
   reset(): void {
     this.spectralChromagram.fill(0);
     this.melodicChromagram.fill(0);
+    this.melodicCadenceHints.fill(0);
     this.recentMelodicMidi.splice(0);
     this.analyzedFrames = 0;
     this.melodicFrames = 0;
+    this.activeMelodicPitchClass = null;
+    this.precedingMelodicPitchClass = null;
+    this.activeMelodicStartedAt = 0;
+    this.lastMelodicObservedAt = 0;
   }
 
   estimate(): KeyDetection | null {
@@ -227,7 +245,7 @@ export class LocalKeyDetector {
         ? (melodicEvidence[index] * melodicWeight) + (spectralEvidence[index] * (1 - melodicWeight))
         : (melodicEvidence?.[index] ?? spectralEvidence?.[index] ?? 0);
     }
-    return rankChromagram(combined);
+    return rankChromagramWithTonicHints(combined, melodicWeight > 0 ? this.melodicCadenceHints : undefined);
   }
 
   ingestSpectrum(spectrum: Float32Array, sampleRate: number, fftSize: number): KeyDetection | null {
@@ -282,8 +300,8 @@ export class LocalKeyDetector {
    * A five-reading median absorbs ordinary vibrato and brief consonant noise
    * before notes are quantized to pitch classes.
    */
-  ingestMelodicPitch(frequency: number, clarity: number): KeyDetection | null {
-    if (!Number.isFinite(frequency) || frequency < 65 || frequency > 1_100 || clarity < .64) return this.estimate();
+  ingestMelodicPitch(frequency: number, clarity: number, timestamp: number): KeyDetection | null {
+    if (!Number.isFinite(frequency) || frequency < 65 || frequency > 1_100 || clarity < .72) return this.estimate();
 
     const midi = 69 + (12 * Math.log2(frequency / 440));
     this.recentMelodicMidi.push(midi);
@@ -292,12 +310,59 @@ export class LocalKeyDetector {
     const stableMidi = ordered[Math.floor(ordered.length / 2)];
     const pitchClass = ((Math.round(stableMidi) % 12) + 12) % 12;
 
+    if (this.activeMelodicPitchClass === null) {
+      this.activeMelodicPitchClass = pitchClass;
+      this.activeMelodicStartedAt = timestamp;
+      this.precedingMelodicPitchClass = null;
+    } else if (this.activeMelodicPitchClass !== pitchClass) {
+      const previousPitchClass = this.activeMelodicPitchClass;
+      this.closeMelodicEvent(false);
+      this.precedingMelodicPitchClass = previousPitchClass;
+      this.activeMelodicPitchClass = pitchClass;
+      this.activeMelodicStartedAt = timestamp;
+    }
+    this.lastMelodicObservedAt = timestamp;
+
     // Clarity reflects periodicity, so breath, unpitched consonants and a
     // noisy room contribute substantially less than sustained sung notes.
     this.melodicChromagram[pitchClass] += clarity ** 1.4;
     this.melodicFrames += 1;
     this.analyzedFrames += 1;
     return this.estimate();
+  }
+
+  /** Marks a pause in a sung phrase without retaining waveform data. */
+  ingestMelodicGap(timestamp: number): KeyDetection | null {
+    if (this.activeMelodicPitchClass !== null && timestamp - this.lastMelodicObservedAt >= 360) {
+      this.closeMelodicEvent(true);
+    }
+    return this.estimate();
+  }
+
+  /** Called once when the capture ends so its last held note can be considered. */
+  finalizeMelodicPhrase(): KeyDetection | null {
+    this.closeMelodicEvent(true);
+    return this.estimate();
+  }
+
+  private closeMelodicEvent(isPhraseEnding: boolean): void {
+    const pitchClass = this.activeMelodicPitchClass;
+    if (pitchClass === null) return;
+
+    const duration = Math.max(0, this.lastMelodicObservedAt - this.activeMelodicStartedAt);
+    if (isPhraseEnding && duration >= 280) {
+      const durationWeight = Math.min(1.25, .35 + (duration / 900));
+      this.melodicCadenceHints[pitchClass] += durationWeight;
+
+      // A leading tone rising to the final note, or a supertonic falling to
+      // it, is a useful melodic resolution cue even without accompaniment.
+      if (this.precedingMelodicPitchClass !== null) {
+        const motion = (pitchClass - this.precedingMelodicPitchClass + 12) % 12;
+        if (motion === 1 || motion === 10) this.melodicCadenceHints[pitchClass] += .55;
+      }
+    }
+    this.activeMelodicPitchClass = null;
+    this.precedingMelodicPitchClass = null;
   }
 }
 

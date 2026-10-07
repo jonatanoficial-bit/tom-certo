@@ -91,10 +91,27 @@ describe('rankChromagram', () => {
     for (const midi of melodyMidi) {
       for (const vibratoCents of [-24, 13, 27, -18, 6]) {
         const frequency = 440 * (2 ** ((midi - 69 + (vibratoCents / 100)) / 12));
-        detector.ingestMelodicPitch(frequency, .91);
+        detector.ingestMelodicPitch(frequency, .91, (detector.frames + 1) * 240);
       }
     }
 
     expect(detector.estimate()?.label).toBe('D maior');
+  });
+
+  it('uses a held melodic cadence to distinguish A minor from its relative major', () => {
+    const detector = new LocalKeyDetector();
+    const melodyMidi = [69, 71, 72, 74, 76, 74, 72, 71, 69];
+    let timestamp = 0;
+
+    for (const midi of melodyMidi) {
+      for (let frame = 0; frame < 4; frame += 1) {
+        timestamp += 240;
+        const frequency = 440 * (2 ** ((midi - 69) / 12));
+        detector.ingestMelodicPitch(frequency, .9, timestamp);
+      }
+    }
+    detector.finalizeMelodicPhrase();
+
+    expect(detector.estimate()?.label).toBe('A menor');
   });
 });

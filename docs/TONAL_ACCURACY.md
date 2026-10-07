@@ -25,6 +25,7 @@ O processamento local combina:
 - piso de ruído adaptativo por janela: som ambiente amplo do palco não é contado como se fosse nota musical; somente picos acima do piso entram como evidência;
 - faixa de microfone ajustada para níveis baixos, sem ativar supressão de ruído ou ganho automático que poderiam alterar a harmonia de uma apresentação ao vivo;
 - trilha melódica para voz e linhas únicas: estima a frequência fundamental, aplica mediana curta contra vibrato e consoantes e prioriza as classes de nota fundamentais sobre formantes e harmônicos vocais;
+- interpretação por frase para melodia isolada: pondera duração, pausa, nota sustentada no fim da frase e uma resolução melódica leve; essa camada só entra com periodicidade monofônica alta, preservando a análise de acordes;
 - correção média de desafinação do instrumento antes de classificar as notas;
 - perfil tonal maior/menor, separação entre hipóteses, diversidade de classes de nota e estabilidade temporal;
 - janela de 15 segundos e bloqueio de resultado tonal curto ou ambíguo.

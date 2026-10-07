@@ -23,7 +23,7 @@ Tom Certo é um assistente musical comercial e local-first, pensado para descobr
 - modo culto com apresentação de alto contraste de música, tom, capo e cifras;
 - preferência de contraste, status online/offline e shell offline atualizado.
 - afinador em tempo real local, com frequência, nota, oitava, cents e direção de ajuste.
-- trilha tonal melódica para voz cantada, com suavização de vibrato e foco na frequência fundamental.
+- trilha tonal melódica para voz cantada, com suavização de vibrato, duração, finais de frase e foco na frequência fundamental, separada da análise harmônica de acordes.
 
 > Um tom só é confirmado quando existem evidências tonais e qualidade de leitura suficientes. Se houver material musical, mas ainda insuficiente para confirmar, o app mostra a **hipótese tonal** de forma explícita — nunca como resultado final. A porcentagem não é uma promessa de “acerto do programa”: ela descreve o sinal e, principalmente, a estabilidade das evidências daquele áudio.
 

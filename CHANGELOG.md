@@ -6,6 +6,8 @@ Todas as mudanças relevantes deste projeto serão documentadas aqui.
 
 ### Added
 
+- Interpretação melódica por frase: duração real das notas, pausas, nota sustentada no fim de frase e resolução melódica leve para desempatar tonalidades relativas sem acompanhamento.
+- Proteção do caminho harmônico: a camada melódica só aceita uma altura com periodicidade monofônica alta; acordes seguem exclusivamente na análise harmônica já validada.
 - Trilha melódica para voz: extrai a frequência fundamental localmente, usa mediana de cinco leituras para absorver vibrato e dá mais peso às classes de nota cantadas do que aos harmônicos vocais.
 - Notação compacta internacional no resultado tonal: `C`, `F#`, `Gm`, inclusive para relativas e hipóteses próximas.
 - Detector tonal reforçado para palco: piso de ruído adaptativo, combinação de evidência harmônica e picos espectrais e teste que rejeita ruído ambiente plano como tonalidade.

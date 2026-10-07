@@ -45,7 +45,7 @@ export function useAudioCapture() {
     captureElapsedRef.current = elapsedMs;
     setCaptureElapsedMs(elapsedMs);
     resetCaptureWindow();
-    const finalDetection = detectorRef.current.estimate();
+    const finalDetection = detectorRef.current.finalizeMelodicPhrase();
     const finalQuality = qualityRef.current.result();
     const hasEnoughTime = hasEnoughCaptureTime(elapsedMs);
     const hasReliableResult = isReliableDetection(finalDetection, detectorRef.current.frames)
@@ -161,7 +161,9 @@ export function useAudioCapture() {
         if (signal.state !== 'clipping' && now - lastMelodicSampleAt >= 240) {
           session.analyser.getFloatTimeDomainData(melodicSamples);
           const pitch = estimatePitch(melodicSamples, session.sampleRate, 65, 1_100);
-          if (pitch) candidate = detectorRef.current.ingestMelodicPitch(pitch.frequency, pitch.clarity);
+          candidate = pitch && pitch.clarity >= .72
+            ? detectorRef.current.ingestMelodicPitch(pitch.frequency, pitch.clarity, now)
+            : detectorRef.current.ingestMelodicGap(now);
           lastMelodicSampleAt = now;
         }
         qualityRef.current.record(signal, candidate);
