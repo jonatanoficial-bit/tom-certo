@@ -1,7 +1,11 @@
 import type { AudioSignalMetrics, SignalState } from './types';
 
-const SILENCE_RMS = 0.012;
-const WEAK_RMS = 0.035;
+// Browser microphones often expose conservative levels, particularly when
+// automatic gain control is disabled to preserve live music dynamics.
+// Keep a wide useful range: absence of spectral evidence still remains silent
+// in the key detector, but a quiet real performance is allowed to be analysed.
+const SILENCE_RMS = 0.004;
+const WEAK_RMS = 0.016;
 const CLIPPING_PEAK = 0.985;
 
 export function classifySignal(rms: number, peak: number): SignalState {

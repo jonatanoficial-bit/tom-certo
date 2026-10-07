@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { isReliableDetection, LocalKeyDetector, rankChromagram, relativeKeyFor } from '../src/music-theory/keyDetector';
 
-function spectrumForCMajorChord(sampleRate = 44_100, fftSize = 4_096, detuningCents = 0): Float32Array {
-  const spectrum = new Float32Array(fftSize / 2).fill(-96);
+function spectrumForCMajorChord(sampleRate = 44_100, fftSize = 4_096, detuningCents = 0, backgroundDecibels = -96): Float32Array {
+  const spectrum = new Float32Array(fftSize / 2).fill(backgroundDecibels);
   const binWidth = sampleRate / fftSize;
 
   for (const fundamental of [130.81, 164.81, 196]) {
@@ -58,5 +58,24 @@ describe('rankChromagram', () => {
     for (let frame = 0; frame < 15; frame += 1) detector.ingestSpectrum(spectrum, 44_100, 4_096);
 
     expect(detector.estimate()?.label).toBe('C maior');
+  });
+
+  it('retains a C major root above a live-like spectral floor', () => {
+    const detector = new LocalKeyDetector();
+    const spectrum = spectrumForCMajorChord(44_100, 4_096, 0, -58);
+
+    for (let frame = 0; frame < 15; frame += 1) detector.ingestSpectrum(spectrum, 44_100, 4_096);
+
+    expect(detector.estimate()?.label).toBe('C maior');
+  });
+
+  it('does not turn a flat room-noise floor into a tonal reading', () => {
+    const detector = new LocalKeyDetector();
+    const spectrum = new Float32Array(2_048).fill(-54);
+
+    for (let frame = 0; frame < 15; frame += 1) detector.ingestSpectrum(spectrum, 44_100, 4_096);
+
+    expect(detector.frames).toBe(0);
+    expect(detector.estimate()).toBeNull();
   });
 });

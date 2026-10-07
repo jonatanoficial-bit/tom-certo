@@ -6,6 +6,9 @@ Todas as mudanças relevantes deste projeto serão documentadas aqui.
 
 ### Added
 
+- Detector tonal reforçado para palco: piso de ruído adaptativo, combinação de evidência harmônica e picos espectrais e teste que rejeita ruído ambiente plano como tonalidade.
+- Faixa útil de microfone ampliada para níveis baixos sem habilitar ganho automático; quadros silenciosos ainda não contam como evidência tonal.
+- Exibição transparente da hipótese tonal quando há notas detectadas, mas a leitura ainda não é estável o bastante para confirmar o tom.
 - Captura tonal temporal: análise local de até 15 segundos, mínimo de 8 segundos para resultado, desligamento automático do microfone e indicador de progresso.
 - Correção harmônica e de detuning no detector tonal para reduzir deslocamentos de semitom em piano e instrumentos levemente desafinados.
 - Calibração de leitura: agrupamento de harmônicos para reduzir falsos deslocamentos em piano/acordes e detector YIN para o afinador monofônico.

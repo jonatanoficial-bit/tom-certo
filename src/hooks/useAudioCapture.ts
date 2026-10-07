@@ -148,7 +148,10 @@ export function useAudioCapture() {
         const signal = measureTimeDomainSignal(samples);
         setMetrics(signal);
         let candidate = detectorRef.current.estimate();
-        if (signal.state === 'healthy' || signal.state === 'weak') {
+        // The detector has its own adaptive spectral floor. Running it for a
+        // quiet frame lets low-gain microphones contribute musical peaks while
+        // a truly silent frame still contributes no tonal evidence.
+        if (signal.state !== 'clipping') {
           session.analyser.getFloatFrequencyData(spectrum);
           candidate = detectorRef.current.ingestSpectrum(spectrum, session.sampleRate, session.analyser.fftSize);
         }

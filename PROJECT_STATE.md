@@ -2,10 +2,10 @@
 
 ## Última atualização
 
-- **Versão:** 0.6.0
-- **Build:** 0600
+- **Versão:** 0.6.1
+- **Build:** 0601
 - **Fase atual:** 04 de 04 — em andamento
-- **Data:** 2026-10-06
+- **Data:** 2026-10-07
 
 ## Status
 
@@ -44,12 +44,15 @@ O Lote 1 está concluído. As Fases 2 e 3 têm seus núcleos funcionais locais; 
 - calibração do detector tonal para séries harmônicas de instrumentos: o motor agora reúne harmônicos na nota fundamental e rejeita entradas ambíguas no afinador.
 - janela controlada de captura: 15 segundos de evidência, mínimo de 8 segundos, barra de progresso e término automático sem armazenar áudio bruto;
 - correção de desafinação média do instrumento antes da análise de tonalidade.
+- filtro de palco no detector tonal: estima o piso de ruído do ambiente antes de aceitar picos musicais e combina evidência de harmônicos e picos espectrais;
+- hipótese tonal explícita quando há notas detectadas, mas a leitura ainda não satisfaz os critérios de confirmação.
+- faixa útil de microfone ampliada para níveis baixos; o detector continua a rejeitar silêncio sem picos musicais.
 
 ## Verificações executadas
 
 - `pnpm lint` — aprovado.
 - `pnpm typecheck` — aprovado.
-- `pnpm test` — aprovado: 9 arquivos / 27 testes.
+- `pnpm test` — aprovado: 10 arquivos / 31 testes.
 - `pnpm build` — aprovado: bundle Vite de produção gerado.
 - QA responsivo manual: 320, 360, 390, 412, 768 e 1440px sem overflow horizontal; Home, CTA e navegação verificados.
 

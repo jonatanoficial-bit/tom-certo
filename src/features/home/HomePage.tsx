@@ -73,7 +73,7 @@ export function HomePage({ guided, onOpenTools }: HomePageProps) {
       </section>
 
       <footer className="app-footer">
-        <span>TOM CERTO</span><i /> <span>v0.6.0 · Build 0600</span>
+        <span>TOM CERTO</span><i /> <span>v0.6.1 · Build 0601</span>
       </footer>
     </>
   );

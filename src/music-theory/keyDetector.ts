@@ -18,7 +18,7 @@ const TONIC_NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A
 const MAJOR_PROFILE = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88] as const;
 const MINOR_PROFILE = [6.33, 2.68, 3.52, 5.38, 2.6, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17] as const;
 const MIN_FREQUENCY = 55;
-const MAX_FREQUENCY = 2_200;
+const MAX_FREQUENCY = 3_500;
 const SPECTRUM_FLOOR = -78;
 const LOWEST_FUNDAMENTAL_MIDI = 36; // C2
 const HIGHEST_FUNDAMENTAL_MIDI = 96; // C7
@@ -66,26 +66,81 @@ function candidateFor(chromagram: readonly number[], tonic: number, mode: KeyMod
   };
 }
 
-function estimateAverageDetuningCents(spectrum: Float32Array, sampleRate: number, fftSize: number): number {
+function estimateNoiseFloor(spectrum: Float32Array): number {
+  const values = Array.from(spectrum).filter(Number.isFinite).sort((left, right) => left - right);
+  if (values.length === 0) return SPECTRUM_FLOOR;
+
+  // Use the quieter fifth of the spectrum as the room/microphone floor. This
+  // prevents broadband PA/room noise from being mistaken for all twelve notes.
+  const twentiethPercentile = values[Math.floor((values.length - 1) * .2)];
+  return Math.max(SPECTRUM_FLOOR, Math.min(-24, twentiethPercentile));
+}
+
+function relativeLevel(decibels: number, noiseFloor: number): number {
+  const ceiling = -12;
+  return clamp((decibels - noiseFloor) / Math.max(1, ceiling - noiseFloor));
+}
+
+function estimateAverageDetuningCents(spectrum: Float32Array, sampleRate: number, fftSize: number, noiseFloor: number): number {
   const binWidth = sampleRate / fftSize;
   let weightedCents = 0;
   let totalWeight = 0;
 
   for (let bin = 2; bin < spectrum.length - 2; bin += 1) {
     const decibels = spectrum[bin];
-    if (!Number.isFinite(decibels) || decibels < -55 || decibels < spectrum[bin - 1] || decibels < spectrum[bin + 1]) continue;
+    if (!Number.isFinite(decibels) || decibels < noiseFloor + 9 || decibels < spectrum[bin - 1] || decibels < spectrum[bin + 1]) continue;
     const frequency = bin * binWidth;
     if (frequency < MIN_FREQUENCY || frequency > MAX_FREQUENCY) continue;
 
     const semitonesFromA = 12 * Math.log2(frequency / 440);
     const cents = (semitonesFromA - Math.round(semitonesFromA)) * 100;
-    const weight = ((decibels - SPECTRUM_FLOOR) / -SPECTRUM_FLOOR) ** 2;
+    const weight = relativeLevel(decibels, noiseFloor) ** 2;
     weightedCents += cents * weight;
     totalWeight += weight;
   }
 
   if (totalWeight === 0) return 0;
   return Math.max(-45, Math.min(45, weightedCents / totalWeight));
+}
+
+function normalizeChromagram(chromagram: Float64Array): Float64Array | null {
+  const total = chromagram.reduce((sum, value) => sum + value, 0);
+  if (total <= 0) return null;
+  return Float64Array.from(chromagram, (value) => value / total);
+}
+
+/**
+ * A sparse peak chromagram complements the harmonic reconstruction below.
+ * It keeps direct evidence from chords and dense live mixes while ignoring the
+ * broad spectral floor produced by rooms and microphones.
+ */
+function spectralPeakChromagram(spectrum: Float32Array, sampleRate: number, fftSize: number, detuningCents: number, noiseFloor: number): Float64Array {
+  const binWidth = sampleRate / fftSize;
+  const peaks: Array<{ bin: number; decibels: number }> = [];
+
+  for (let bin = 2; bin < spectrum.length - 2; bin += 1) {
+    const decibels = spectrum[bin];
+    if (!Number.isFinite(decibels) || decibels < noiseFloor + 5) continue;
+    if (decibels < spectrum[bin - 1] || decibels < spectrum[bin + 1]) continue;
+    const frequency = bin * binWidth;
+    if (frequency < MIN_FREQUENCY || frequency > MAX_FREQUENCY) continue;
+    peaks.push({ bin, decibels });
+  }
+
+  const chromagram = new Float64Array(12);
+  const tuningRatio = 2 ** (detuningCents / 1_200);
+  for (const peak of peaks.sort((left, right) => right.decibels - left.decibels).slice(0, 60)) {
+    const frequency = (peak.bin * binWidth) / tuningRatio;
+    const pitch = 69 + (12 * Math.log2(frequency / 440));
+    const nearestMidi = Math.round(pitch);
+    const distance = Math.abs(pitch - nearestMidi);
+    const pitchClass = ((nearestMidi % 12) + 12) % 12;
+    const level = relativeLevel(peak.decibels, noiseFloor);
+    const tuningWeight = Math.max(0, Math.cos(Math.PI * distance));
+    chromagram[pitchClass] += (level * level * tuningWeight) / Math.sqrt(frequency);
+  }
+
+  return chromagram;
 }
 
 /**
@@ -146,10 +201,10 @@ export class LocalKeyDetector {
   }
 
   ingestSpectrum(spectrum: Float32Array, sampleRate: number, fftSize: number): KeyDetection | null {
-    let frameEnergy = 0;
     const binWidth = sampleRate / fftSize;
-    const frameChroma = new Float64Array(12);
-    const detuningCents = estimateAverageDetuningCents(spectrum, sampleRate, fftSize);
+    const harmonicChroma = new Float64Array(12);
+    const noiseFloor = estimateNoiseFloor(spectrum);
+    const detuningCents = estimateAverageDetuningCents(spectrum, sampleRate, fftSize, noiseFloor);
 
     for (let midi = LOWEST_FUNDAMENTAL_MIDI; midi <= HIGHEST_FUNDAMENTAL_MIDI; midi += 1) {
       const fundamental = 440 * (2 ** ((midi - 69 + (detuningCents / 100)) / 12));
@@ -165,24 +220,27 @@ export class LocalKeyDetector {
           spectrum[bin] ?? -Infinity,
           spectrum[Math.min(spectrum.length - 1, bin + 1)] ?? -Infinity,
         );
-        if (!Number.isFinite(nearbyDecibels) || nearbyDecibels < SPECTRUM_FLOOR) continue;
+        if (!Number.isFinite(nearbyDecibels) || nearbyDecibels < noiseFloor + 2) continue;
 
         // Squaring the normalized level suppresses the spectral floor while
         // preserving peaks shared by a note's harmonic series.
-        const level = (nearbyDecibels - SPECTRUM_FLOOR) / -SPECTRUM_FLOOR;
+        const level = relativeLevel(nearbyDecibels, noiseFloor);
         harmonicScore += (level * level) / (harmonic ** .72);
       }
 
-      if (harmonicScore < .08) continue;
+      if (harmonicScore < .05) continue;
       const pitchClass = ((midi % 12) + 12) % 12;
       const weight = (harmonicScore ** 1.2) / Math.sqrt(fundamental);
-      frameChroma[pitchClass] += weight;
-      frameEnergy += weight;
+      harmonicChroma[pitchClass] += weight;
     }
 
-    if (frameEnergy > .0001) {
+    const harmonicEvidence = normalizeChromagram(harmonicChroma);
+    const peakEvidence = normalizeChromagram(spectralPeakChromagram(spectrum, sampleRate, fftSize, detuningCents, noiseFloor));
+    if (harmonicEvidence || peakEvidence) {
       for (let index = 0; index < this.chromagram.length; index += 1) {
-        this.chromagram[index] += frameChroma[index] / frameEnergy;
+        this.chromagram[index] += harmonicEvidence && peakEvidence
+          ? (harmonicEvidence[index] * .68) + (peakEvidence[index] * .32)
+          : (harmonicEvidence?.[index] ?? peakEvidence?.[index] ?? 0);
       }
       this.analyzedFrames += 1;
     }

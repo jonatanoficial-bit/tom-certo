@@ -24,7 +24,7 @@ Tom Certo é um assistente musical comercial e local-first, pensado para descobr
 - preferência de contraste, status online/offline e shell offline atualizado.
 - afinador em tempo real local, com frequência, nota, oitava, cents e direção de ajuste.
 
-> Um resultado só é mostrado quando existem evidências tonais e qualidade de leitura suficientes. A porcentagem não é uma promessa de “acerto do programa”: ela descreve o sinal e, principalmente, a estabilidade das evidências daquele áudio.
+> Um tom só é confirmado quando existem evidências tonais e qualidade de leitura suficientes. Se houver material musical, mas ainda insuficiente para confirmar, o app mostra a **hipótese tonal** de forma explícita — nunca como resultado final. A porcentagem não é uma promessa de “acerto do programa”: ela descreve o sinal e, principalmente, a estabilidade das evidências daquele áudio.
 
 O afinador mede uma nota isolada; para identificar o tom de uma música ou acorde, use a leitura tonal da tela inicial.
 

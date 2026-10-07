@@ -31,6 +31,7 @@ export function ListeningPanel() {
   const isError = phase === 'error';
   const header = isLive ? (session?.source === 'file' ? 'ARQUIVO EM LEITURA' : 'OUVINDO AGORA') : isBusy ? 'PREPARANDO ÁUDIO' : isComplete ? 'LEITURA CONCLUÍDA' : isError ? 'PRECISAMOS DE ATENÇÃO' : 'PRONTO PARA OUVIR';
   const relativeKey = detection ? relativeKeyFor(detection) : null;
+  const hasCandidate = isComplete && Boolean(detection);
 
   return (
     <>
@@ -60,9 +61,9 @@ export function ListeningPanel() {
               <i><b style={{ width: `${Math.round(captureProgress * 100)}%` }} /></i>
             </div>
           </div>
-        ) : isComplete && hasReliableDetection && detection ? (
-          <div className="key-wheel" aria-label={`Tom identificado: ${detection.label}`}>
-            <span className="key-wheel__label">TOM</span>
+        ) : hasCandidate && detection ? (
+          <div className={`key-wheel ${hasReliableDetection ? '' : 'key-wheel--provisional'}`} aria-label={`${hasReliableDetection ? 'Tom identificado' : 'Hipótese tonal'}: ${detection.label}`}>
+            <span className="key-wheel__label">{hasReliableDetection ? 'TOM' : 'HIPÓTESE'}</span>
             <strong>{detection.tonicName}</strong>
             <small>{detection.mode === 'major' ? 'MAIOR' : 'MENOR'}</small>
           </div>
@@ -80,7 +81,7 @@ export function ListeningPanel() {
 
       {isComplete ? (
         <section className={`key-result ${hasReliableDetection ? 'key-result--reliable' : 'key-result--inconclusive'}`} aria-live="polite" aria-label="Resultado da análise tonal">
-          <div className="key-result__eyebrow"><Icon name={hasReliableDetection ? 'spark' : 'shield'} size={15} /> {hasReliableDetection ? 'TONALIDADE ENCONTRADA' : 'RESULTADO INCONCLUSIVO'}</div>
+          <div className="key-result__eyebrow"><Icon name={hasReliableDetection ? 'spark' : 'shield'} size={15} /> {hasReliableDetection ? 'TONALIDADE ENCONTRADA' : hasCandidate ? 'HIPÓTESE AINDA EM VALIDAÇÃO' : 'RESULTADO INCONCLUSIVO'}</div>
           {hasReliableDetection && detection ? (
             <>
               <div className="key-result__details">
@@ -90,6 +91,16 @@ export function ListeningPanel() {
               <div className="quality-bar" aria-label={`Confiança da leitura: ${Math.round(readingQuality.score * 100)}%`}><span style={{ width: `${Math.round(readingQuality.score * 100)}%` }} /></div>
               <p>{readingQuality.summary} A evidência tonal tem mais peso que o volume do áudio nesta porcentagem.</p>
               <small>Hipóteses próximas: {detection.alternatives.slice(0, 2).map((alternative) => alternative.label).join(' · ')}</small>
+            </>
+          ) : detection ? (
+            <>
+              <div className="key-result__details">
+                <div><span>HIPÓTESE ATUAL</span><strong>{detection.label}</strong></div>
+                <div><span>EVIDÊNCIA TONAL</span><strong>{Math.round(detection.confidence * 100)}%</strong></div>
+              </div>
+              <div className="quality-bar" aria-label={`Evidência tonal: ${Math.round(detection.confidence * 100)}%`}><span style={{ width: `${Math.round(detection.confidence * 100)}%` }} /></div>
+              <p>Há notas musicais suficientes para sugerir este tom, mas a leitura ainda variou demais para confirmá-lo. Não use esta hipótese como resultado final.</p>
+              <small>{detection.pitchClassCount} classes de nota encontradas · Próximas: {detection.alternatives.slice(0, 2).map((alternative) => alternative.label).join(' · ')}</small>
             </>
           ) : (
             <p>Não vamos adivinhar: toque ou envie um trecho com alguns acordes e menos ruído para chegar a uma tonalidade confiável.</p>
